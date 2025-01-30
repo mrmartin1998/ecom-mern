@@ -1,0 +1,2 @@
+# This will show a nice visual representation of both branches
+git log --graph --oneline --all --decorate

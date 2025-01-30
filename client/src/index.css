@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Only keep custom styles that don't conflict with DaisyUI */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
