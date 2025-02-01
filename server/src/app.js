@@ -6,7 +6,7 @@ const connectDB = require('./config/db');
 const rateLimit = require('express-rate-limit');
 const { handleError, AppError } = require('./utils/errorHandler');
 require('dotenv').config();
-const userRoutes = require('./routes/user.routes');
+const routes = require('./routes');
 
 const app = express();
 
@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(limiter);                   // Rate limiting
 
 // Routes
-app.use('/api/users', userRoutes);
+app.use('/api', routes);
 
 // Basic route
 app.get('/', (req, res) => {
