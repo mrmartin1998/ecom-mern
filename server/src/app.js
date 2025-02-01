@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
+const rateLimit = require('express-rate-limit');
+const { handleError, AppError } = require('./utils/errorHandler');
 require('dotenv').config();
 const userRoutes = require('./routes/user.routes');
 
@@ -11,37 +13,42 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Middleware Stack (requests flow through these in order):
-app.use(cors());                    // Allows frontend to make requests
-app.use(helmet());                  // Adds security headers
-app.use(morgan('dev'));            // Logs requests to console
-app.use(express.json());           // Parses incoming JSON
-app.use(express.urlencoded({ extended: true }));
-
-// Custom logger
-app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();  // Passes request to next middleware
+// Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000,
+  max: process.env.RATE_LIMIT_MAX || 100
 });
 
+// Middleware Stack (in required order)
+app.use(cors({                      // CORS first
+  origin: process.env.CLIENT_URL || 'http://localhost:5173'
+}));
+app.use(helmet());                  // Security headers
+app.use(morgan('dev'));             // Logging
+app.use(express.json());            // Parse JSON
+app.use(express.urlencoded({ extended: true }));
+app.use(limiter);                   // Rate limiting
+
 // Routes
-app.use('/api/users', userRoutes);  // Routes to correct handler
+app.use('/api/users', userRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the MERN API' });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something broke!' });
+// 404 handler
+app.use((req, res, next) => {
+  const error = new AppError('ROUTE_NOT_FOUND', 'Route not found', 404);
+  next(error);
 });
 
-const PORT = process.env.PORT || 5000;
+// Error handling middleware
+app.use(handleError);
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
 module.exports = app; 
