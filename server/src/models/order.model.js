@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const Product = require('./product.model');
+const Cart = require('./cart.model');
+const { AppError } = require('../utils/errorHandler');
 
 const orderSchema = new mongoose.Schema({
   userId: {
@@ -43,7 +46,8 @@ const orderSchema = new mongoose.Schema({
     },
     zipCode: {
       type: String,
-      required: [true, 'Zip code is required']
+      required: [true, 'Zip code is required'],
+      match: [/^\d{5}(-\d{4})?$/, 'Invalid ZIP code format']
     },
     country: {
       type: String,
@@ -59,10 +63,108 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'completed', 'failed', 'refunded'],
     default: 'pending'
+  },
+  paymentIntentId: {
+    type: String,
+    sparse: true
   }
 }, {
   timestamps: true
 });
+
+// Validate stock before saving
+orderSchema.pre('save', async function(next) {
+  if (this.isNew || this.isModified('items')) {
+    try {
+      for (const item of this.items) {
+        const product = await Product.findById(item.productId);
+        if (!product) {
+          throw new AppError('PRODUCT_NOT_FOUND', 
+            `Product ${item.productId} not found`, 404);
+        }
+        
+        if (!product.checkAvailability(item.quantity)) {
+          throw new AppError('INSUFFICIENT_STOCK', 
+            `Only ${product.stockQuantity} units available for ${product.name}`, 400);
+        }
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
+});
+
+// Create order from cart
+orderSchema.statics.createFromCart = async function(userId, cart, shippingAddress) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Validate and update stock
+    for (const item of cart.items) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        throw new AppError('PRODUCT_NOT_FOUND', 
+          `Product ${item.productId} not found`, 404);
+      }
+      
+      if (!product.checkAvailability(item.quantity)) {
+        throw new AppError('INSUFFICIENT_STOCK', 
+          `Only ${product.stockQuantity} units available for ${product.name}`, 400);
+      }
+      
+      await product.updateStock(-item.quantity);
+    }
+
+    // Create order
+    const order = new this({
+      userId,
+      items: cart.items,
+      totalAmount: cart.totalPrice,
+      shippingAddress
+    });
+
+    await order.save({ session });
+    
+    // Clear cart
+    await Cart.findByIdAndDelete(cart._id, { session });
+    
+    await session.commitTransaction();
+    return order;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+// Status transition validation
+const validTransitions = {
+  pending: ['processing', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped: ['delivered', 'cancelled'],
+  delivered: [],
+  cancelled: []
+};
+
+// Update order status with validation
+orderSchema.methods.updateStatus = async function(newStatus) {
+  const currentStatus = this.orderStatus;
+  
+  if (currentStatus === newStatus) return this;
+  
+  if (!validTransitions[currentStatus].includes(newStatus)) {
+    throw new AppError('INVALID_TRANSITION', 
+      `Cannot transition from ${currentStatus} to ${newStatus}`, 400);
+  }
+  
+  this.orderStatus = newStatus;
+  return this.save();
+};
 
 // Calculate total amount
 orderSchema.methods.calculateTotal = function() {
@@ -70,18 +172,6 @@ orderSchema.methods.calculateTotal = function() {
     return total + (item.price * item.quantity);
   }, 0);
   return this.totalAmount;
-};
-
-// Update order status
-orderSchema.methods.updateStatus = async function(status) {
-  if (this.orderStatus === status) return this;
-  
-  if (!this.schema.path('orderStatus').enumValues.includes(status)) {
-    throw new Error('Invalid order status');
-  }
-  
-  this.orderStatus = status;
-  return this.save();
 };
 
 // Update payment status
