@@ -3,14 +3,35 @@ const router = express.Router();
 const OrderController = require('../controllers/order.controller');
 const auth = require('../middleware/auth');
 const validate = require('../middleware/validate');
+const { 
+  createOrderValidator, 
+  updateStatusValidator, 
+  updatePaymentValidator 
+} = require('../middleware/validators/order.validator');
 
 const orderController = new OrderController();
 
-router.get('/', auth, orderController.index);
-router.get('/:id', auth, orderController.show);
-router.post('/', auth, orderController.store);
-router.patch('/:id/status', auth, orderController.updateStatus);
-router.patch('/:id/payment', auth, orderController.updatePaymentStatus);
-router.delete('/:id', auth, orderController.delete);
+// User routes
+router.get('/', auth(), orderController.index);
+router.get('/:id', auth(), orderController.show);
+router.post('/', auth(), createOrderValidator, validate, orderController.store);
+
+// Status updates (some restricted to admin)
+router.patch('/:id/status', 
+  auth(['customer', 'admin']), 
+  updateStatusValidator, 
+  validate, 
+  orderController.updateStatus
+);
+
+// Admin only routes
+router.patch('/:id/payment', 
+  auth(['admin']), 
+  updatePaymentValidator, 
+  validate, 
+  orderController.updatePaymentStatus
+);
+
+router.delete('/:id', auth(['admin']), orderController.delete);
 
 module.exports = router; 
