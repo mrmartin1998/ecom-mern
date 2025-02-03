@@ -30,4 +30,24 @@ const generalLimiter = rateLimit({
   }
 });
 
-module.exports = { authLimiter, generalLimiter }; 
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 payment requests per windowMs
+  message: {
+    success: false,
+    data: null,
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Too many payment attempts, please try again later.'
+    },
+    meta: {
+      retryAfter: '15 minutes'
+    }
+  }
+});
+
+module.exports = { 
+  authLimiter, 
+  generalLimiter,
+  paymentLimiter 
+}; 
