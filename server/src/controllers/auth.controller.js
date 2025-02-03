@@ -1,33 +1,86 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
+const { AppError } = require('../utils/errorHandler');
 
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
     
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Check for existing user
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }]
+    });
+
+    if (existingUser) {
+      throw new AppError(
+        'DUPLICATE_USER',
+        'User with this email or username already exists',
+        409
+      );
+    }
     
-    // Create user
+    // Create user with enhanced password hashing
+    const salt = await bcrypt.genSalt(12); // Increased from 10 to 12 rounds
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
     const user = new User({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role: 'customer' // Force default role for security
     });
     
     await user.save();
     
-    // Generate token
+    // Generate token with role
     const token = jwt.sign(
-      { userId: user._id },
+      { 
+        userId: user._id,
+        role: user.role
+      },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { 
+        expiresIn: '24h',
+        algorithm: 'HS256' // Explicitly specify algorithm
+      }
     );
     
-    res.status(201).json({ token });
+    // Send response without password
+    res.status(201).json({
+      success: true,
+      data: {
+        token,
+        user: user.toJSON()
+      },
+      error: null,
+      meta: {
+        tokenExpires: '24h'
+      }
+    });
+
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        success: false,
+        data: null,
+        error: {
+          code: error.code,
+          message: error.message
+        },
+        meta: null
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        data: null,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'An unexpected error occurred'
+        },
+        meta: null
+      });
+    }
   }
 };
 
@@ -35,28 +88,39 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      throw new AppError('AUTH_FAILED', 'Invalid credentials', 401);
     }
     
-    // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await user.comparePassword(password);
     if (!isValidPassword) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      throw new AppError('AUTH_FAILED', 'Invalid credentials', 401);
     }
     
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
+    const token = user.generateAuthToken();
     
-    res.json({ token });
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: user.toJSON()
+      },
+      error: null,
+      meta: {
+        tokenExpires: '24h'
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.statusCode || 500).json({
+      success: false,
+      data: null,
+      error: {
+        code: error.code || 'SERVER_ERROR',
+        message: error.message || 'An unexpected error occurred'
+      },
+      meta: null
+    });
   }
 };
 
