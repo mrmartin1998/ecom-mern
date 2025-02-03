@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="footer footer-center p-10 bg-base-200 text-base-content rounded">
       <div className="grid grid-flow-row gap-4">
         <div className="flex flex-col items-center">
-          <p className="font-bold text-lg">MERN Stack</p>
+          <p className="font-bold text-lg">Ecom MERN</p>
           <p className="text-sm opacity-75">Built with DaisyUI</p>
         </div>
         <div className="grid grid-flow-col gap-4">

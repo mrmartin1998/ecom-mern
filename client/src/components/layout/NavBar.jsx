@@ -36,7 +36,7 @@ const Navbar = () => {
               <li onClick={closeMenu}><Link to="/about">About</Link></li>
             </ul>
           </div>
-          <Link to="/" className="btn btn-ghost text-xl">MERN App</Link>
+          <Link to="/" className="btn btn-ghost text-xl">Ecom MERN</Link>
         </div>
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal px-1">
