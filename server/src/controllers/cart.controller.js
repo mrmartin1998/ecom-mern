@@ -160,6 +160,30 @@ class CartController extends BaseController {
       });
     }
   }
+
+  // Add clearCart method
+  clearCart = async (req, res, next) => {
+    try {
+      const cart = await Cart.findOne({ userId: req.userId });
+      
+      if (!cart) {
+        throw new AppError('NOT_FOUND', 'Cart not found', 404);
+      }
+
+      cart.items = [];
+      cart.totalAmount = 0;
+      await cart.save();
+
+      res.json({
+        success: true,
+        data: cart,
+        error: null,
+        meta: null
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = CartController; 

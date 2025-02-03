@@ -1,34 +1,37 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_URL = `${BASE_URL}/api`;
+import axios from 'axios';
 
-export const userService = {
-  // Get all users
-  getAllUsers: async () => {
-    const response = await fetch(`${API_URL}/users`);
-    return response.json();
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
+});
 
-  // Create user
-  createUser: async (userData) => {
-    const response = await fetch(`${API_URL}/users`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData)
-    });
-    return response.json();
+// Request interceptor for adding auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
+  (error) => Promise.reject(error)
+);
 
-  // Sign in
-  signIn: async (credentials) => {
-    const response = await fetch(`${API_URL}/users/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials)
-    });
-    return response.json();
+// Response interceptor for handling errors
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const customError = {
+      code: error.response?.data?.error?.code || 'UNKNOWN_ERROR',
+      message: error.response?.data?.error?.message || 'An unexpected error occurred',
+      status: error.response?.status || 500,
+    };
+    return Promise.reject(customError);
   }
-}; 
+);
+
+export default api; 
