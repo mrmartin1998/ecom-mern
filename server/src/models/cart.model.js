@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const Product = require('./product.model');
+const { AppError } = require('../utils/errorHandler');
 
 const cartSchema = new mongoose.Schema({
   userId: {
@@ -33,6 +35,33 @@ const cartSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Validate stock and price before saving
+cartSchema.pre('save', async function(next) {
+  try {
+    for (const item of this.items) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        throw new AppError('PRODUCT_NOT_FOUND', `Product ${item.productId} not found`, 404);
+      }
+      
+      // Check stock availability
+      if (!product.checkAvailability(item.quantity)) {
+        throw new AppError('INSUFFICIENT_STOCK', 
+          `Only ${product.stockQuantity} units available for ${product.name}`, 400);
+      }
+      
+      // Verify price hasn't changed
+      if (product.price !== item.price) {
+        throw new AppError('PRICE_CHANGED', 
+          `Price for ${product.name} has changed to ${product.formatPrice()}`, 400);
+      }
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Calculate total price
 cartSchema.methods.calculateTotal = function() {
   this.totalPrice = this.items.reduce((total, item) => {
@@ -41,19 +70,38 @@ cartSchema.methods.calculateTotal = function() {
   return this.totalPrice;
 };
 
-// Add or update item in cart
-cartSchema.methods.addItem = async function(productId, quantity, price) {
+// Add or update item with validation
+cartSchema.methods.addItem = async function(productId, quantity) {
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new AppError('PRODUCT_NOT_FOUND', 'Product not found', 404);
+  }
+
   const existingItem = this.items.find(item => 
     item.productId.toString() === productId.toString()
   );
 
   if (existingItem) {
-    existingItem.quantity += quantity;
+    const newQuantity = existingItem.quantity + quantity;
+    if (!product.checkAvailability(newQuantity)) {
+      throw new AppError('INSUFFICIENT_STOCK', 
+        `Only ${product.stockQuantity} units available`, 400);
+    }
+    existingItem.quantity = newQuantity;
+    existingItem.price = product.price; // Update price
   } else {
-    this.items.push({ productId, quantity, price });
+    if (!product.checkAvailability(quantity)) {
+      throw new AppError('INSUFFICIENT_STOCK', 
+        `Only ${product.stockQuantity} units available`, 400);
+    }
+    this.items.push({ 
+      productId, 
+      quantity, 
+      price: product.price 
+    });
   }
 
-  this.calculateTotal();
+  await this.calculateTotal();
   return this.save();
 };
 
