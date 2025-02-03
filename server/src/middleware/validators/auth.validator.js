@@ -26,6 +26,19 @@ const registerValidator = [
     .withMessage('Invalid role specified')
 ];
 
+const loginValidator = [
+  body('email')
+    .trim()
+    .isEmail()
+    .withMessage('Please enter a valid email')
+    .normalizeEmail(),
+  
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+];
+
 module.exports = {
-  registerValidator
+  registerValidator,
+  loginValidator
 }; 

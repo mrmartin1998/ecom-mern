@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const { AppError } = require('../utils/errorHandler');
+const TokenService = require('../services/token.service');
 
 const register = async (req, res) => {
   try {
@@ -98,13 +99,81 @@ const login = async (req, res) => {
       throw new AppError('AUTH_FAILED', 'Invalid credentials', 401);
     }
     
-    const token = user.generateAuthToken();
+    const token = TokenService.generateToken(user);
+    const refreshToken = TokenService.generateRefreshToken(user);
     
     res.json({
       success: true,
       data: {
         token,
+        refreshToken,
         user: user.toJSON()
+      },
+      error: null,
+      meta: {
+        tokenExpires: '24h',
+        refreshTokenExpires: '7d'
+      }
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      data: null,
+      error: {
+        code: error.code || 'SERVER_ERROR',
+        message: error.message || 'An unexpected error occurred'
+      },
+      meta: null
+    });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      TokenService.blacklistToken(token);
+    }
+    
+    res.json({
+      success: true,
+      data: null,
+      error: null,
+      meta: null
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      data: null,
+      error: {
+        code: error.code || 'SERVER_ERROR',
+        message: error.message || 'An unexpected error occurred'
+      },
+      meta: null
+    });
+  }
+};
+
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      throw new AppError('NO_TOKEN', 'Refresh token required', 400);
+    }
+    
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const user = await User.findById(decoded.userId);
+    
+    if (!user || decoded.version !== user.tokenVersion) {
+      throw new AppError('INVALID_TOKEN', 'Invalid refresh token', 401);
+    }
+    
+    const newToken = TokenService.generateToken(user);
+    
+    res.json({
+      success: true,
+      data: {
+        token: newToken
       },
       error: null,
       meta: {
@@ -126,5 +195,7 @@ const login = async (req, res) => {
 
 module.exports = {
   register,
-  login
+  login,
+  logout,
+  refreshToken
 }; 
