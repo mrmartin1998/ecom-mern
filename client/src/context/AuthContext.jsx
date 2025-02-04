@@ -1,7 +1,10 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import api from '@/services/api';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 
-const AuthContext = createContext(null);
+// Export the context
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -10,31 +13,46 @@ export const AuthProvider = ({ children }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const login = useCallback(async (email, password) => {
+  // Initialize auth state
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = useCallback(async (email, password, remember = false) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token, user } = response.data;
+      const { data } = await api.post('/auth/login', { email, password });
       
-      // Store in localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      if (remember) {
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+      } else {
+        sessionStorage.setItem('token', data.data.token);
+        sessionStorage.setItem('user', JSON.stringify(data.data.user));
+      }
       
-      setUser(user);
+      api.defaults.headers.common['Authorization'] = `Bearer ${data.data.token}`;
+      setUser(data.data.user);
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error.message || 'Login failed'
-      };
+      setError(error.response?.data?.error?.message || 'Login failed');
+      return { success: false, error: error.response?.data?.error?.message };
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const logout = useCallback(async () => {
+    setIsLoading(true);
     try {
       await api.post('/auth/logout');
     } catch (error) {
@@ -42,38 +60,48 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      delete api.defaults.headers.common['Authorization'];
       setUser(null);
+      setIsLoading(false);
+      navigate(ROUTES.HOME);
     }
-  }, []);
+  }, [navigate]);
 
   const register = useCallback(async (userData) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await api.post('/auth/register', userData);
-      const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      setUser(user);
+      const { data } = await api.post('/auth/register', userData);
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error.message || 'Registration failed'
-      };
+      setError(error.response?.data?.error?.message || 'Registration failed');
+      return { success: false, error: error.response?.data?.error?.message };
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  const checkAuth = useCallback(() => {
+    return !!user;
+  }, [user]);
+
+  const hasRole = useCallback((requiredRoles) => {
+    if (!user) return false;
+    if (!requiredRoles.length) return true;
+    return requiredRoles.includes(user.role);
+  }, [user]);
+
   const value = {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    error,
     login,
     logout,
-    register
+    register,
+    checkAuth,
+    hasRole
   };
 
   return (
@@ -81,13 +109,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-// Custom hook for using auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
