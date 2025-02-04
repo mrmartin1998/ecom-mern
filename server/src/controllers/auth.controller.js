@@ -7,6 +7,7 @@ const TokenService = require('../services/token.service');
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
+    console.log('Registration attempt for:', email);
     
     // Check for existing user
     const existingUser = await User.findOne({
@@ -21,20 +22,73 @@ const register = async (req, res) => {
       );
     }
     
-    // Create user with enhanced password hashing
-    const salt = await bcrypt.genSalt(12); // Increased from 10 to 12 rounds
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
+    // Create new user (let the schema middleware handle password hashing)
     const user = new User({
       username,
       email,
-      password: hashedPassword,
-      role: 'customer' // Force default role for security
+      password,
+      role: 'customer'
     });
     
     await user.save();
+    console.log('User registered successfully:', email);
     
-    // Generate token with role
+    res.status(201).json({
+      success: true,
+      data: {
+        user: user.toJSON()
+      },
+      error: null
+    });
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        success: false,
+        data: null,
+        error: {
+          code: error.code,
+          message: error.message
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        data: null,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'An unexpected error occurred'
+        }
+      });
+    }
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
+    
+    const user = await User.findOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') }
+    });
+
+    if (!user) {
+      console.log('User not found for email:', email);
+      throw new AppError('AUTH_FAILED', 'Invalid credentials', 401);
+    }
+    
+    console.log('User found, comparing passwords...');
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('Password comparison result:', isValidPassword);
+
+    if (!isValidPassword) {
+      console.log('Invalid password for user:', email);
+      throw new AppError('AUTH_FAILED', 'Invalid credentials', 401);
+    }
+    
+    // Generate token
     const token = jwt.sign(
       { 
         userId: user._id,
@@ -43,12 +97,13 @@ const register = async (req, res) => {
       process.env.JWT_SECRET,
       { 
         expiresIn: '24h',
-        algorithm: 'HS256' // Explicitly specify algorithm
+        algorithm: 'HS256'
       }
     );
     
-    // Send response without password
-    res.status(201).json({
+    console.log('Login successful for:', email);
+    
+    res.json({
       success: true,
       data: {
         token,
@@ -59,63 +114,8 @@ const register = async (req, res) => {
         tokenExpires: '24h'
       }
     });
-
   } catch (error) {
-    if (error instanceof AppError) {
-      res.status(error.statusCode).json({
-        success: false,
-        data: null,
-        error: {
-          code: error.code,
-          message: error.message
-        },
-        meta: null
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        data: null,
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred'
-        },
-        meta: null
-      });
-    }
-  }
-};
-
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw new AppError('AUTH_FAILED', 'Invalid credentials', 401);
-    }
-    
-    const isValidPassword = await user.comparePassword(password);
-    if (!isValidPassword) {
-      throw new AppError('AUTH_FAILED', 'Invalid credentials', 401);
-    }
-    
-    const token = TokenService.generateToken(user);
-    const refreshToken = TokenService.generateRefreshToken(user);
-    
-    res.json({
-      success: true,
-      data: {
-        token,
-        refreshToken,
-        user: user.toJSON()
-      },
-      error: null,
-      meta: {
-        tokenExpires: '24h',
-        refreshTokenExpires: '7d'
-      }
-    });
-  } catch (error) {
+    console.error('Login error:', error);
     res.status(error.statusCode || 500).json({
       success: false,
       data: null,

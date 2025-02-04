@@ -7,11 +7,7 @@ const LoginButton = ({ isLoading }) => {
       disabled={isLoading}
       className="btn btn-primary w-full"
     >
-      {isLoading ? (
-        <LoadingSpinner size="sm" />
-      ) : (
-        'Login'
-      )}
+      {isLoading ? 'Logging in...' : 'Login'}
     </button>
   );
 };

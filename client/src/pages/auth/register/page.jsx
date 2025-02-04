@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import RegisterForm from '@/components/features/auth/RegisterForm';
 import { ROUTES } from '@/config/routes';
 
@@ -17,9 +17,9 @@ const RegisterPage = () => {
         <RegisterForm onSuccess={onSuccess} />
         <p className="text-center mt-4 text-sm">
           Already have an account?{' '}
-          <a href={ROUTES.LOGIN} className="link link-primary">
+          <Link to={ROUTES.LOGIN} className="link link-primary">
             Login here
-          </a>
+          </Link>
         </p>
       </div>
     </div>

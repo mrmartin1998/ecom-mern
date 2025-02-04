@@ -7,11 +7,7 @@ const RegisterButton = ({ isLoading }) => {
       disabled={isLoading}
       className="btn btn-primary w-full"
     >
-      {isLoading ? (
-        <LoadingSpinner size="sm" />
-      ) : (
-        'Create Account'
-      )}
+      {isLoading ? 'Creating Account...' : 'Create Account'}
     </button>
   );
 };

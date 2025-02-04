@@ -3,7 +3,8 @@ import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 
-const AuthContext = createContext(null);
+// Export the context
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -73,10 +74,6 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const { data } = await api.post('/auth/register', userData);
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.data.token}`;
-      setUser(data.data.user);
       return { success: true };
     } catch (error) {
       setError(error.response?.data?.error?.message || 'Registration failed');
@@ -112,13 +109,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-// Custom hook for using auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

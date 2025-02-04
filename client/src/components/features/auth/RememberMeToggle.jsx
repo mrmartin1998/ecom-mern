@@ -1,14 +1,16 @@
 const RememberMeToggle = ({ checked, onChange }) => {
   return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="checkbox checkbox-sm"
-      />
-      <span className="text-sm">Remember me</span>
-    </label>
+    <div className="form-control">
+      <label className="label cursor-pointer">
+        <span className="label-text">Remember me</span>
+        <input 
+          type="checkbox" 
+          className="toggle" 
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+      </label>
+    </div>
   );
 };
 

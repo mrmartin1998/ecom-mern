@@ -32,6 +32,7 @@ const LoginForm = ({ onSuccess }) => {
           {...register('email', { required: 'Email is required' })}
           className="input input-bordered w-full"
           placeholder="Email"
+          autoComplete="email"
         />
         {errors.email && <FormError message={errors.email.message} />}
       </div>
@@ -42,6 +43,7 @@ const LoginForm = ({ onSuccess }) => {
           {...register('password', { required: 'Password is required' })}
           className="input input-bordered w-full"
           placeholder="Password"
+          autoComplete="current-password"
         />
         {errors.password && <FormError message={errors.password.message} />}
       </div>

@@ -7,14 +7,13 @@ export const ROUTES = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
   
+  // Protected routes
+  PROFILE: '/profile',
+  ORDERS: '/orders',
+  
   // Product routes
   PRODUCTS: '/products',
   PRODUCT_DETAIL: '/products/:id',
-  
-  // User routes
-  PROFILE: '/profile',
-  ORDERS: '/profile/orders',
-  ORDER_DETAIL: '/profile/orders/:id',
   
   // Cart routes
   CART: '/cart',

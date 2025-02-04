@@ -20,8 +20,9 @@ const limiter = rateLimit({
 });
 
 // Middleware Stack (in required order)
-app.use(cors({                      // CORS first
-  origin: process.env.CLIENT_URL || 'http://localhost:5173'
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
 }));
 app.use(helmet());                  // Security headers
 app.use(morgan('dev'));             // Logging

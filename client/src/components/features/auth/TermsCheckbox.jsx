@@ -1,25 +1,16 @@
 const TermsCheckbox = ({ checked, onChange, error }) => {
   return (
     <div className="form-control">
-      <label className="flex items-start gap-2 cursor-pointer">
-        <input
-          type="checkbox"
+      <label className="label cursor-pointer">
+        <input 
+          type="checkbox" 
+          className="checkbox" 
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
-          className="checkbox checkbox-sm mt-1"
         />
-        <span className="text-sm">
-          I agree to the{' '}
-          <a href="/terms" className="link link-primary" target="_blank" rel="noopener noreferrer">
-            Terms of Service
-          </a>
-          {' '}and{' '}
-          <a href="/privacy" className="link link-primary" target="_blank" rel="noopener noreferrer">
-            Privacy Policy
-          </a>
-        </span>
+        <span className="label-text">I accept the terms and conditions</span>
       </label>
-      {error && <span className="text-error text-sm mt-1">{error}</span>}
+      {error && <span className="text-error text-sm">{error}</span>}
     </div>
   );
 };
