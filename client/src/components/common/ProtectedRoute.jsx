@@ -1,16 +1,21 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/config/routes';
+import LoadingSpinner from './ui/LoadingSpinner';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const location = useLocation();
-  const isAuthenticated = false; // This will come from auth context later
-  const userRole = null; // This will come from auth context later
+  const { checkAuth, hasRole, isLoading } = useAuth();
 
-  if (!isAuthenticated) {
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!checkAuth()) {
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
-  if (roles.length > 0 && !roles.includes(userRole)) {
+  if (roles.length > 0 && !hasRole(roles)) {
     return <Navigate to={ROUTES.HOME} replace />;
   }
 
