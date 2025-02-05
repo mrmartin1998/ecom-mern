@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/services/api';
 
 const fetchProducts = async ({ search, category, sort, page = 1, limit = 12, priceRange, stockStatus }) => {
   const params = new URLSearchParams();
@@ -20,8 +20,7 @@ const fetchProducts = async ({ search, category, sort, page = 1, limit = 12, pri
     params.append('inStock', stockStatus === 'inStock');
   }
 
-  const response = await axios.get(`/api/products?${params.toString()}`);
-  return response.data;
+  return api.get(`/products?${params.toString()}`);
 };
 
 export const useProducts = (filters = {}) => {
