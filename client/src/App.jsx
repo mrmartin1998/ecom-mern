@@ -40,9 +40,9 @@ function App() {
               <Route 
                 path={ROUTES.CART} 
                 element={
-                  <ProtectedRoute>
+                  
                     <CartPage />
-                  </ProtectedRoute>
+                  
                 } 
               />
 

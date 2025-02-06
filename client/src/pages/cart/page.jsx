@@ -2,6 +2,7 @@ import React from 'react';
 import { useCart } from '@/hooks/useCart';
 import EmptyCart from '@/components/features/cart/EmptyCart';
 import CartItem from '@/components/features/cart/CartItem';
+import CartTotals from '@/components/features/cart/CartTotals';
 //import CartSummary from '@/components/features/cart/CartSummary';
 //import CartTotals from '@/components/features/cart/CartTotals';
 
@@ -33,7 +34,7 @@ const CartPage = () => {
           </div>
         </div>
         <div className="lg:col-span-4">
-          {/* CartTotals will go here */}
+          <CartTotals />
         </div>
       </div>
     </div>
