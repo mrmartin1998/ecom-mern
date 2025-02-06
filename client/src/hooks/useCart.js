@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import api from '@/services/api';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 
 export const useCart = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { user, login } = useAuth();
 
   // Fetch cart data only if user is authenticated
   const { data: cart, isLoading: isLoadingCart } = useQuery({
