@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 const FilterSidebar = ({ onFilter, onReset }) => {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [stockStatus, setStockStatus] = useState('all'); // all, inStock, outOfStock
+  const [category, setCategory] = useState('');
+
+  const categories = ['all', 'electronics', 'clothing', 'books', 'home', 'other'];
 
   const handlePriceChange = (e) => {
     const { name, value } = e.target;
@@ -16,9 +19,14 @@ const FilterSidebar = ({ onFilter, onReset }) => {
     setStockStatus(e.target.value);
   };
 
+  const handleCategoryChange = (e) => {
+    setCategory(e.target.value);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onFilter({
+      category: category === 'all' ? '' : category,
       priceRange: {
         min: priceRange.min ? Number(priceRange.min) : null,
         max: priceRange.max ? Number(priceRange.max) : null
@@ -30,6 +38,7 @@ const FilterSidebar = ({ onFilter, onReset }) => {
   const handleReset = () => {
     setPriceRange({ min: '', max: '' });
     setStockStatus('all');
+    setCategory('all');
     onReset();
   };
 
@@ -38,6 +47,22 @@ const FilterSidebar = ({ onFilter, onReset }) => {
       <h3 className="text-lg font-semibold mb-4">Filters</h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Add Category Filter */}
+        <div className="space-y-2">
+          <h4 className="font-medium">Category</h4>
+          <select
+            value={category}
+            onChange={handleCategoryChange}
+            className="select select-bordered select-sm w-full"
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Price Range */}
         <div className="space-y-2">
           <h4 className="font-medium">Price Range</h4>

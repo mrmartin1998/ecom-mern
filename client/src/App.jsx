@@ -13,6 +13,7 @@ const HomePage = lazy(() => import('@/pages/home/page'));
 const AboutPage = lazy(() => import('@/pages/about/page'));
 const LoginPage = lazy(() => import('@/pages/auth/login/page'));
 const RegisterPage = lazy(() => import('@/pages/auth/register/page'));
+const ProductsPage = lazy(() => import('@/pages/product/page'));
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             {/* Public Routes */}
             <Route path={ROUTES.HOME} element={<HomePage />} />
             <Route path={ROUTES.ABOUT} element={<AboutPage />} />
+            <Route path={ROUTES.PRODUCTS} element={<ProductsPage />} />
 
             {/* Auth Routes */}
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
