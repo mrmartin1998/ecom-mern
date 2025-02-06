@@ -15,6 +15,7 @@ const LoginPage = lazy(() => import('@/pages/auth/login/page'));
 const RegisterPage = lazy(() => import('@/pages/auth/register/page'));
 const ProductsPage = lazy(() => import('@/pages/products/page'));
 const ProductDetailPage = lazy(() => import('@/pages/products/[id]/page'));
+const CartPage = lazy(() => import('@/pages/cart/page'));
 
 function App() {
   return (
@@ -32,6 +33,16 @@ function App() {
             {/* Auth Routes */}
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+
+            {/* Add Cart Route */}
+            <Route 
+              path={ROUTES.CART} 
+              element={
+                
+                  <CartPage />
+                
+              } 
+            />
 
             {/* Remove Protected Routes for now since ProfilePage isn't ready */}
             
