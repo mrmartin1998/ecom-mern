@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import api from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useCart = () => {
   const queryClient = useQueryClient();
+  const { user, login } = useAuth();
 
-  // Fetch cart data
+  // Fetch cart data only if user is authenticated
   const { data: cart, isLoading: isLoadingCart } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
@@ -13,19 +15,23 @@ export const useCart = () => {
         const response = await api.get('/carts');
         return response.data;
       } catch (error) {
-        // Don't throw on 401 (unauthorized) as user might not be logged in
-        if (error.response?.status !== 401) {
-          throw error;
+        if (error.response?.status === 401) {
+          return null;
         }
-        return null;
+        throw error;
       }
     },
+    // Only fetch if user is authenticated
+    enabled: !!user,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Add to cart mutation
+  // Add to cart mutation with auth check
   const { mutate: addToCart, isLoading: isAddingToCart } = useMutation({
     mutationFn: async ({ productId, quantity }) => {
+      if (!user) {
+        throw new Error('Please login to add items to cart');
+      }
       const response = await api.post('/carts/items', { productId, quantity });
       return response.data;
     },
@@ -34,7 +40,7 @@ export const useCart = () => {
       toast.success('Item added to cart');
     },
     onError: (error) => {
-      const message = error.response?.data?.message || 'Failed to add item to cart';
+      const message = error.response?.data?.message || error.message || 'Failed to add item to cart';
       toast.error(message);
     },
   });
@@ -97,6 +103,7 @@ export const useCart = () => {
   return {
     cart,
     isLoading,
+    isAuthenticated: !!user,
     addToCart: (productId, quantity) => addToCart({ productId, quantity }),
     updateQuantity,
     removeItem,

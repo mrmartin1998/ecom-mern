@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import ProductInfo from '@/components/features/product/ProductInfo';
 import ProductGallery from '@/components/features/product/ProductGallery';
+import AddToCartSection from '@/components/features/product/AddToCartSection';
 import { getProduct } from '@/services/api/products';
 
 const ProductDetailPage = () => {
@@ -69,16 +70,17 @@ const ProductDetailPage = () => {
 
       {/* Product Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Left Column - Now using ProductGallery */}
+        {/* Left Column - Gallery */}
         <ProductGallery 
           mainImage={product.imageUrl}
           images={product.images || []}
           productName={product.name}
         />
 
-        {/* Right Column - Product Info */}
-        <div>
+        {/* Right Column - Info and Cart */}
+        <div className="flex flex-col gap-8">
           <ProductInfo product={product} />
+          <AddToCartSection product={product} />
         </div>
       </div>
     </div>
