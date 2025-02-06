@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import ProductInfo from '@/components/features/product/ProductInfo';
+import ProductGallery from '@/components/features/product/ProductGallery';
 import { getProduct } from '@/services/api/products';
 
 const ProductDetailPage = () => {
@@ -68,14 +69,12 @@ const ProductDetailPage = () => {
 
       {/* Product Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Left Column - Will contain ProductGallery later */}
-        <div className="aspect-square bg-base-200 rounded-lg">
-          <img 
-            src={product.imageUrl} 
-            alt={product.name}
-            className="w-full h-full object-cover rounded-lg"
-          />
-        </div>
+        {/* Left Column - Now using ProductGallery */}
+        <ProductGallery 
+          mainImage={product.imageUrl}
+          images={product.images || []}
+          productName={product.name}
+        />
 
         {/* Right Column - Product Info */}
         <div>
