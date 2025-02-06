@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 import LoginButton from './LoginButton';
 import RememberMeToggle from './RememberMeToggle';
 import FormError from './FormError';
