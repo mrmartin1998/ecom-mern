@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import ProductInfo from '@/components/features/product/ProductInfo';
 import ProductGallery from '@/components/features/product/ProductGallery';
 import AddToCartSection from '@/components/features/product/AddToCartSection';
+import RelatedProducts from '@/components/features/product/RelatedProducts';
 import { getProduct } from '@/services/api/products';
 
 const ProductDetailPage = () => {
@@ -83,6 +84,9 @@ const ProductDetailPage = () => {
           <AddToCartSection product={product} />
         </div>
       </div>
+
+      {/* Related Products Section */}
+      <RelatedProducts currentProduct={product} />
     </div>
   );
 };
