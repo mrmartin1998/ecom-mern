@@ -3,8 +3,17 @@ import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 
-// Export the context
+// Create context
 export const AuthContext = createContext(null);
+
+// Export the useAuth hook
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
