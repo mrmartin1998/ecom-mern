@@ -1,98 +1,60 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { authService } from '@/services/auth.service';
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const EmailVerification = () => {
-  const [status, setStatus] = useState('loading');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const token = searchParams.get('token');
+  const { verifyEmail } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
-  useEffect(() => {
-    const verifyEmail = async () => {
-      if (!token) {
-        setStatus('error');
-        return;
+  const handleVerification = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      const token = searchParams.get('token');
+      console.log('Attempting verification with token:', token);
+      const result = await verifyEmail(token);
+      console.log('Verification result:', result);
+      
+      if (result.success) {
+        setIsVerified(true);
+        setTimeout(() => {
+          navigate('/auth/login');
+        }, 3000); // Redirect after 3 seconds
       }
-
-      try {
-        const response = await authService.verifyEmail(token);
-        console.log('Verification response:', response);
-        
-        if (response.data?.isAlreadyVerified) {
-          setStatus('already-verified');
-        } else if (response.success) {
-          setStatus('success');
-        } else {
-          setStatus('error');
-        }
-      } catch (error) {
-        console.error('Verification error:', error);
-        setStatus('error');
-      }
-    };
-
-    verifyEmail();
-  }, [token]);
-
-  const renderContent = () => {
-    if (status === 'loading') {
-      return (
-        <div className="text-center">
-          <div className="loading loading-spinner loading-lg"></div>
-          <p className="mt-4">Verifying your email...</p>
-        </div>
-      );
+    } catch (err) {
+      console.error('Verification error:', err);
+      setError('Failed to verify email. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    const content = {
-      success: {
-        title: 'Email Verified Successfully!',
-        message: 'You can now log in to your account.',
-        buttonText: 'Go to Login',
-        buttonAction: () => navigate('/login'),
-        buttonClass: 'btn-primary',
-        titleClass: 'text-success'
-      },
-      'already-verified': {
-        title: 'Email Already Verified',
-        message: 'Your email has already been verified. You can log in to your account.',
-        buttonText: 'Go to Login',
-        buttonAction: () => navigate('/login'),
-        buttonClass: 'btn-primary',
-        titleClass: 'text-info'
-      },
-      error: {
-        title: 'Verification Failed',
-        message: 'The verification link is invalid or has expired.',
-        buttonText: 'Back to Register',
-        buttonAction: () => navigate('/register'),
-        buttonClass: 'btn-outline',
-        titleClass: 'text-error'
-      }
-    };
-
-    const currentContent = content[status];
-
-    return (
-      <div className="text-center">
-        <h2 className={`text-2xl font-bold ${currentContent.titleClass} mb-4`}>
-          {currentContent.title}
-        </h2>
-        <p className="mb-4">{currentContent.message}</p>
-        <button 
-          className={`btn ${currentContent.buttonClass}`}
-          onClick={currentContent.buttonAction}
-        >
-          {currentContent.buttonText}
-        </button>
-      </div>
-    );
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-base-200 rounded-lg shadow-lg">
-      {renderContent()}
+    <div className="flex flex-col items-center justify-center p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Email Verification</h1>
+      
+      {isVerified ? (
+        <div className="text-center space-y-4">
+          <p className="text-green-600">Email verified successfully!</p>
+          <p>Redirecting to login page...</p>
+        </div>
+      ) : (
+        <div className="text-center space-y-4">
+          <p>Please click the button below to verify your email address.</p>
+          <button
+            onClick={handleVerification}
+            disabled={isLoading}
+            className="btn btn-primary"
+          >
+            {isLoading ? 'Verifying...' : 'Verify Email'}
+          </button>
+          {error && <p className="text-red-500">{error}</p>}
+        </div>
+      )}
     </div>
   );
 };

@@ -61,15 +61,10 @@ This document outlines the implementation plan for the initial release of the E-
   - API endpoint tests
 
 ### 4. Authentication System
-- User Registration
-  - Basic registration endpoint
-  - Password hashing
-  - Input validation
-
-- User Login
-  - Login endpoint
-  - JWT implementation
-  - Protected routes middleware
+- [x] User Registration
+- [x] Email Verification
+- [x] User Login
+- [ ] Password Reset (next feature)
 
 ### 5. Feature Endpoints
 - Product Management

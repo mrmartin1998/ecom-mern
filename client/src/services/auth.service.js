@@ -24,12 +24,13 @@ class AuthService {
 
   async verifyEmail(token) {
     try {
+      console.log('Making verification request with token:', token);
       const response = await api.get(`/auth/verify-email?token=${token}`);
-      console.log('Auth service response:', response.data);
-      return response.data; // Just return the raw response data
+      console.log('Verification response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Auth service error:', error);
-      return { success: false };
+      console.error('Verification error:', error);
+      throw error;
     }
   }
 
@@ -46,6 +47,16 @@ class AuthService {
 
   isAuthenticated() {
     return !!localStorage.getItem('token');
+  }
+
+  async forgotPassword(email) {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  }
+
+  async resetPassword(token, password) {
+    const response = await api.post('/auth/reset-password', { token, password });
+    return response.data;
   }
 }
 

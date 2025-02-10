@@ -32,19 +32,15 @@ class EmailService {
 
   // Verification email
   async sendVerificationEmail(email, token) {
-    const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+    const verificationUrl = `${process.env.CLIENT_URL}/auth/verify-email?token=${token}`;
     
     return this.sendEmail({
       to: email,
       subject: 'Verify Your Email',
       html: `
-        <h1>Welcome to ${process.env.APP_NAME}!</h1>
-        <p>Please verify your email address by clicking the link below:</p>
-        <a href="${verificationUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">
-          Verify Email
-        </a>
-        <p>If you didn't create an account, please ignore this email.</p>
-        <p>This link will expire in 24 hours.</p>
+        <h1>Email Verification</h1>
+        <p>Click the link below to verify your email address:</p>
+        <a href="${verificationUrl}">Click here to verify your email</a>
       `
     });
   }

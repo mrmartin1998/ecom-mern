@@ -102,6 +102,20 @@ export const AuthProvider = ({ children }) => {
     return requiredRoles.includes(user.role);
   }, [user]);
 
+  const verifyEmail = useCallback(async (token) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get(`/auth/verify-email?token=${token}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      setError(error.response?.data?.error?.message || 'Verification failed');
+      return { success: false, error: error.response?.data?.error?.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const value = {
     user,
     isLoading,
@@ -110,7 +124,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     register,
     checkAuth,
-    hasRole
+    hasRole,
+    verifyEmail
   };
 
   return (

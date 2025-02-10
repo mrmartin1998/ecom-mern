@@ -7,8 +7,9 @@ export const ROUTES = {
   // Auth Routes
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
-  VERIFY_EMAIL: '/verify-email',
+  VERIFY_EMAIL: '/auth/verify-email',
   RESET_PASSWORD: '/auth/reset-password',
+  FORGOT_PASSWORD: '/auth/forgot-password',
   
   // User Routes
   PROFILE: '/profile',

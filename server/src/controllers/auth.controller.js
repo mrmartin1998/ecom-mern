@@ -3,81 +3,45 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const { AppError } = require('../utils/errorHandler');
 const TokenService = require('../services/token.service');
-const EmailService = require('../services/email.service');
 const crypto = require('crypto');
+const EmailService = require('../services/email.service');
 
 const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
     console.log('Registration attempt for:', email);
-    
-    // Check for existing user
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
 
-    if (existingUser) {
-      throw new AppError(
-        'DUPLICATE_USER',
-        'User with this email or username already exists',
-        409
-      );
-    }
-    
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    console.log('Generated verification token:', verificationToken);
+    // Create username from email if not provided
+    const username = email.split('@')[0];
 
-    // Create new user
     const user = new User({
-      username,
       email,
       password,
-      role: 'customer',
-      email_verified: false,
+      username,
       verification_token: verificationToken,
-      verification_expiry: tokenExpiry
+      verification_expiry: verificationExpiry
     });
 
     await user.save();
     
-    // Verify the user was saved correctly
-    const savedUser = await User.findOne({ email });
-    console.log('Saved user verification token:', savedUser.verification_token);
-    console.log('Token matches:', savedUser.verification_token === verificationToken);
+    // Send verification email
+    await EmailService.sendVerificationEmail(email, verificationToken);
+    console.log('Email sent:', email);
 
-    try {
-      await EmailService.sendVerificationEmail(email, verificationToken);
-      console.log('Verification email sent successfully');
-    } catch (emailError) {
-      console.error('Email sending failed:', emailError);
-      return res.status(201).json({
-        success: true,
-        data: {
-          user: user.toJSON(),
-          message: 'Account created but verification email could not be sent. Please contact support.'
-        },
-        warning: 'Verification email could not be sent'
-      });
-    }
-
-    console.log('Registration completed successfully');
-    
     res.status(201).json({
       success: true,
       data: {
-        user: user.toJSON(),
-        message: 'Please check your email to verify your account'
+        message: 'Registration successful. Please check your email to verify your account.'
       }
     });
-
   } catch (error) {
     console.error('Registration error:', error);
     res.status(error.statusCode || 500).json({
       success: false,
-      data: null,
       error: {
         code: error.code || 'SERVER_ERROR',
         message: error.message || 'An unexpected error occurred'
@@ -218,67 +182,133 @@ const refreshToken = async (req, res) => {
 const verifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
-    console.log('Verifying email with token:', token);
+    console.log('Received verification request with token:', token);
 
     if (!token) {
-      throw new AppError('MISSING_TOKEN', 'Verification token is required', 400);
-    }
-
-    // Find user with matching token
-    const user = await User.findOne({
-      $or: [
-        { verification_token: token },
-        { email_verified: true } // Check if a user was already verified with this token
-      ]
-    });
-
-    console.log('Found user:', user ? user.email : 'No user found');
-
-    if (!user) {
-      throw new AppError('INVALID_TOKEN', 'Invalid verification token', 400);
-    }
-
-    // Check if already verified
-    if (user.email_verified) {
-      return res.json({
-        success: true,
-        data: {
-          message: 'Email already verified',
-          isAlreadyVerified: true
-        },
-        error: null
+      console.log('No token provided');
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: 'Verification token is required'
+        }
       });
     }
 
-    // Check token expiry
-    if (user.verification_expiry && user.verification_expiry < Date.now()) {
-      throw new AppError('EXPIRED_TOKEN', 'Verification token has expired', 400);
+    const user = await User.findOne({ 
+      verification_token: token,
+      verification_expiry: { $gt: Date.now() }
+    });
+
+    console.log('Found user:', user ? 'Yes' : 'No');
+
+    if (!user) {
+      console.log('Invalid or expired token');
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: 'Invalid or expired verification token'
+        }
+      });
     }
 
-    // Update user verification status
     user.email_verified = true;
     user.verification_token = undefined;
     user.verification_expiry = undefined;
     await user.save();
+    console.log('User verified successfully');
 
-    console.log('Email verified successfully for:', user.email);
+    return res.json({
+      success: true,
+      data: {
+        message: 'Email verified successfully'
+      }
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to verify email'
+      }
+    });
+  }
+};
+//
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.json({
+        success: true,
+        data: {
+          message: 'If your email is registered, you will receive password reset instructions.'
+        }
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+    user.reset_token = resetToken;
+    user.reset_token_expiry = resetExpiry;
+    await user.save();
+
+    await EmailService.sendPasswordResetEmail(email, resetToken);
 
     res.json({
       success: true,
       data: {
-        message: 'Email verified successfully',
-        isAlreadyVerified: false
-      },
-      error: null
+        message: 'Password reset instructions sent to your email.'
+      }
     });
   } catch (error) {
-    console.error('Email verification error:', error);
+    console.error('Password reset request error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process password reset request'
+      }
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    // Find user with valid reset token
+    const user = await User.findOne({
+      reset_token: token,
+      reset_token_expiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      throw new AppError('INVALID_TOKEN', 'Invalid or expired reset token', 400);
+    }
+
+    // Update password and clear reset token
+    user.password = password;
+    user.reset_token = undefined;
+    user.reset_token_expiry = undefined;
+    await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Password successfully reset'
+      }
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
     res.status(error.statusCode || 500).json({
       success: false,
-      data: null,
       error: {
         code: error.code || 'SERVER_ERROR',
-        message: error.message || 'An unexpected error occurred'
+        message: error.message || 'Failed to reset password'
       }
     });
   }
@@ -289,5 +319,7 @@ module.exports = {
   login,
   logout,
   refreshToken,
-  verifyEmail
+  verifyEmail,
+  forgotPassword,
+  resetPassword
 }; 
