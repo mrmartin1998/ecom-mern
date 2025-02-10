@@ -133,4 +133,33 @@
   if (!email || !password) {
     return res.status(400).json({ message: 'All fields required' });
   }
-  ``` 
+  ```
+
+## 12. Testing Implementation
+- Start with critical paths
+  Example:
+  ```javascript
+  // Test user authentication first
+  describe('Auth Flow', () => {
+    test('user registration', () => {
+      // Test code
+    });
+  });
+  ```
+
+- Follow test hierarchy:
+  1. Unit Tests (Functions/Components)
+  2. Integration Tests (API/Services)
+  3. E2E Tests (User Flows)
+
+## 13. Development Context
+- Share repository structure
+- Reference completed issues
+- Indicate current task
+- List relevant dependencies
+
+## 14. Progress Continuation
+- Confirm last completed task
+- Verify current issue
+- Review pending changes
+- Check dependencies 
