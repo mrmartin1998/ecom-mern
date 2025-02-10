@@ -8,6 +8,8 @@ import MainLayout from '@/components/layout/MainLayout';
 import LoadingSpinner from '@/components/common/ui/LoadingSpinner';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import { AuthProvider } from '@/context/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Lazy load pages
 const HomePage = lazy(() => import('@/pages/home/page'));
@@ -18,6 +20,8 @@ const ProductsPage = lazy(() => import('@/pages/products/page'));
 const ProductDetailPage = lazy(() => import('@/pages/products/[id]/page'));
 const CartPage = lazy(() => import('@/pages/cart/page'));
 const VerifyEmailPage = lazy(() => import('@/pages/auth/verify-email.page'));
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password/page'));
+const ResetPasswordPage = lazy(() => import('@/pages/auth/reset-password/page'));
 
 function App() {
   return (
@@ -37,6 +41,9 @@ function App() {
               <Route path={ROUTES.LOGIN} element={<LoginPage />} />
               <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
               <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
+              <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+              <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+              
 
               {/* Add Cart Route */}
               <Route 
@@ -58,6 +65,7 @@ function App() {
           </main>
         </Suspense>
         <Footer />
+        <ToastContainer />
       </div>
     </AuthProvider>
   )

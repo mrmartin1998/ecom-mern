@@ -238,38 +238,42 @@ const verifyEmail = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log('Password reset requested for:', email);
+
     const user = await User.findOne({ email });
-    
     if (!user) {
+      // Send success even if user not found (security best practice)
       return res.json({
         success: true,
         data: {
-          message: 'If your email is registered, you will receive password reset instructions.'
+          message: 'If an account exists, password reset instructions have been sent'
         }
       });
     }
 
+    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000);
+    const resetExpiry = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
 
     user.reset_token = resetToken;
     user.reset_token_expiry = resetExpiry;
     await user.save();
 
+    // Send reset email
     await EmailService.sendPasswordResetEmail(email, resetToken);
+    console.log('Reset email sent to:', email);
 
     res.json({
       success: true,
       data: {
-        message: 'Password reset instructions sent to your email.'
+        message: 'Password reset instructions have been sent to your email'
       }
     });
   } catch (error) {
-    console.error('Password reset request error:', error);
+    console.error('Forgot password error:', error);
     res.status(500).json({
       success: false,
       error: {
-        code: 'SERVER_ERROR',
         message: 'Failed to process password reset request'
       }
     });
@@ -279,15 +283,20 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
+    console.log('Password reset attempt with token');
 
-    // Find user with valid reset token
     const user = await User.findOne({
       reset_token: token,
       reset_token_expiry: { $gt: Date.now() }
     });
 
     if (!user) {
-      throw new AppError('INVALID_TOKEN', 'Invalid or expired reset token', 400);
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: 'Invalid or expired reset token'
+        }
+      });
     }
 
     // Update password and clear reset token
@@ -295,20 +304,20 @@ const resetPassword = async (req, res) => {
     user.reset_token = undefined;
     user.reset_token_expiry = undefined;
     await user.save();
+    console.log('Password reset successful for user:', user.email);
 
     res.json({
       success: true,
       data: {
-        message: 'Password successfully reset'
+        message: 'Password has been reset successfully'
       }
     });
   } catch (error) {
-    console.error('Password reset error:', error);
-    res.status(error.statusCode || 500).json({
+    console.error('Reset password error:', error);
+    res.status(500).json({
       success: false,
       error: {
-        code: error.code || 'SERVER_ERROR',
-        message: error.message || 'Failed to reset password'
+        message: 'Failed to reset password'
       }
     });
   }
