@@ -64,7 +64,19 @@ This document outlines the implementation plan for the initial release of the E-
 - [x] User Registration
 - [x] Email Verification
 - [x] User Login
-- [ ] Password Reset (next feature)
+- [x] Password Reset
+  - [x] Forgot Password Request
+  - [x] Reset Password with Token
+- [ ] User Profile Management (next feature)
+
+### Completed Authentication Features
+1. Registration with email verification
+2. Login with JWT authentication
+3. Password reset flow
+   - Request reset link
+   - Email delivery
+   - Token verification
+   - Password update
 
 ### 5. Feature Endpoints
 - Product Management
