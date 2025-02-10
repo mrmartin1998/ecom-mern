@@ -55,5 +55,5 @@
 
 ### Dependencies
 - Basic User Model ✅
-- Email service setup
-- JWT configuration 
+- Email service setup ✅
+- JWT configuration ✅

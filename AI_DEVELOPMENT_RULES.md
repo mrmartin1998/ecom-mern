@@ -163,3 +163,72 @@
 - Verify current issue
 - Review pending changes
 - Check dependencies 
+
+## 15. Package Management
+- Verify dependencies before coding
+  Example:
+  ```bash
+  # Check package.json first
+  npm list react-toastify
+  # Install if missing
+  npm install react-toastify
+  ```
+
+## 16. Session Continuity
+- Start each session with status update:
+  ```markdown
+  /start-development
+  Current Issue: #issue_number
+  Last Completed: task_name
+  Project Phase: phase_name
+  Core Files: @relevant_files
+  ```
+
+## 17. Error Recovery Protocol
+- Document error solutions
+  Example:
+  ```markdown
+  Error: Module not found
+  Solution: 
+  1. Check package.json
+  2. Install missing dependency
+  3. Update import statement
+  ```
+
+## 18. Feature Dependencies
+- Check ISSUES_INDEX.md before starting
+- Verify all dependent features are complete
+- Document any new dependencies found
+  Example:
+  ```markdown
+  Feature: User Profile
+  Dependencies:
+  - [x] Authentication (#1)
+  - [ ] Image Upload Service
+  ```
+
+## 19. Testing Documentation
+- Create test specifications before implementation:
+  ```markdown
+  ### Test Cases
+  1. Unit Tests:
+     - Function behavior
+     - Edge cases
+     - Error handling
+  2. Integration Tests:
+     - API endpoints
+     - Component interaction
+  3. E2E Tests:
+     - User flows
+     - Error scenarios
+  ```
+
+## 20. Development Checkpoints
+- Pre-implementation checklist:
+  ```markdown
+  - [ ] Dependencies verified
+  - [ ] Packages installed
+  - [ ] Documentation updated
+  - [ ] Test cases defined
+  - [ ] Branch created
+  ``` 

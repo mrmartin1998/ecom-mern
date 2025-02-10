@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import LoginButton from './LoginButton';
 import RememberMeToggle from './RememberMeToggle';
 import FormError from './FormError';
+import { Link } from 'react-router-dom';
 
 const LoginForm = ({ onSuccess }) => {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -48,7 +49,15 @@ const LoginForm = ({ onSuccess }) => {
         {errors.password && <FormError message={errors.password.message} />}
       </div>
 
-      <RememberMeToggle checked={remember} onChange={setRemember} />
+      <div className="flex justify-between items-center">
+        <RememberMeToggle checked={remember} onChange={setRemember} />
+        <Link 
+          to="/auth/forgot-password" 
+          className="text-primary text-sm hover:underline"
+        >
+          Forgot Password?
+        </Link>
+      </div>
       
       {error && <FormError message={error} />}
 
