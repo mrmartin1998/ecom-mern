@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const { AppError } = require('../utils/errorHandler');
 const TokenService = require('../services/token.service');
+const EmailService = require('../services/email.service');
+const crypto = require('crypto');
 
 const register = async (req, res) => {
   try {
@@ -22,46 +24,65 @@ const register = async (req, res) => {
       );
     }
     
-    // Create new user (let the schema middleware handle password hashing)
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    console.log('Generated verification token:', verificationToken);
+
+    // Create new user
     const user = new User({
       username,
       email,
       password,
-      role: 'customer'
+      role: 'customer',
+      email_verified: false,
+      verification_token: verificationToken,
+      verification_expiry: tokenExpiry
     });
-    
+
     await user.save();
-    console.log('User registered successfully:', email);
+    
+    // Verify the user was saved correctly
+    const savedUser = await User.findOne({ email });
+    console.log('Saved user verification token:', savedUser.verification_token);
+    console.log('Token matches:', savedUser.verification_token === verificationToken);
+
+    try {
+      await EmailService.sendVerificationEmail(email, verificationToken);
+      console.log('Verification email sent successfully');
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      return res.status(201).json({
+        success: true,
+        data: {
+          user: user.toJSON(),
+          message: 'Account created but verification email could not be sent. Please contact support.'
+        },
+        warning: 'Verification email could not be sent'
+      });
+    }
+
+    console.log('Registration completed successfully');
     
     res.status(201).json({
       success: true,
       data: {
-        user: user.toJSON()
-      },
-      error: null
+        user: user.toJSON(),
+        message: 'Please check your email to verify your account'
+      }
     });
 
   } catch (error) {
     console.error('Registration error:', error);
-    if (error instanceof AppError) {
-      res.status(error.statusCode).json({
-        success: false,
-        data: null,
-        error: {
-          code: error.code,
-          message: error.message
-        }
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        data: null,
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred'
-        }
-      });
-    }
+    res.status(error.statusCode || 500).json({
+      success: false,
+      data: null,
+      error: {
+        code: error.code || 'SERVER_ERROR',
+        message: error.message || 'An unexpected error occurred'
+      }
+    });
   }
 };
 
@@ -193,9 +214,80 @@ const refreshToken = async (req, res) => {
   }
 };
 
+// New endpoint for email verification
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    console.log('Verifying email with token:', token);
+
+    if (!token) {
+      throw new AppError('MISSING_TOKEN', 'Verification token is required', 400);
+    }
+
+    // Find user with matching token
+    const user = await User.findOne({
+      $or: [
+        { verification_token: token },
+        { email_verified: true } // Check if a user was already verified with this token
+      ]
+    });
+
+    console.log('Found user:', user ? user.email : 'No user found');
+
+    if (!user) {
+      throw new AppError('INVALID_TOKEN', 'Invalid verification token', 400);
+    }
+
+    // Check if already verified
+    if (user.email_verified) {
+      return res.json({
+        success: true,
+        data: {
+          message: 'Email already verified',
+          isAlreadyVerified: true
+        },
+        error: null
+      });
+    }
+
+    // Check token expiry
+    if (user.verification_expiry && user.verification_expiry < Date.now()) {
+      throw new AppError('EXPIRED_TOKEN', 'Verification token has expired', 400);
+    }
+
+    // Update user verification status
+    user.email_verified = true;
+    user.verification_token = undefined;
+    user.verification_expiry = undefined;
+    await user.save();
+
+    console.log('Email verified successfully for:', user.email);
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Email verified successfully',
+        isAlreadyVerified: false
+      },
+      error: null
+    });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      data: null,
+      error: {
+        code: error.code || 'SERVER_ERROR',
+        message: error.message || 'An unexpected error occurred'
+      }
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
-  refreshToken
+  refreshToken,
+  verifyEmail
 }; 

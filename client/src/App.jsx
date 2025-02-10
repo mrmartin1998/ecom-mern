@@ -17,6 +17,7 @@ const RegisterPage = lazy(() => import('@/pages/auth/register/page'));
 const ProductsPage = lazy(() => import('@/pages/products/page'));
 const ProductDetailPage = lazy(() => import('@/pages/products/[id]/page'));
 const CartPage = lazy(() => import('@/pages/cart/page'));
+const VerifyEmailPage = lazy(() => import('@/pages/auth/verify-email.page'));
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
               {/* Auth Routes */}
               <Route path={ROUTES.LOGIN} element={<LoginPage />} />
               <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+              <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
 
               {/* Add Cart Route */}
               <Route 
@@ -46,8 +48,11 @@ function App() {
                 } 
               />
 
-              {/* Remove Protected Routes for now since ProfilePage isn't ready */}
-              
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                {/* ... protected routes ... */}
+              </Route>
+
               {/* Remove 404 Route for now since NotFoundPage isn't ready */}
             </Routes>
           </main>

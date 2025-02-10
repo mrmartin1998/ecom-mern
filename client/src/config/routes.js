@@ -1,27 +1,21 @@
 export const ROUTES = {
-  // Public routes
+  // Public Routes
   HOME: '/',
   ABOUT: '/about',
+  PRODUCTS: '/products',
   
-  // Auth routes
+  // Auth Routes
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
+  VERIFY_EMAIL: '/verify-email',
+  RESET_PASSWORD: '/auth/reset-password',
   
-  // Protected routes
+  // User Routes
   PROFILE: '/profile',
-  ORDERS: '/orders',
+  SETTINGS: '/settings',
   
-  // Product routes
-  PRODUCTS: '/products',
-  PRODUCT_DETAIL: '/products/:id',
-  
-  // Cart routes
+  // Shopping Routes
   CART: '/cart',
-  CHECKOUT: '/cart/checkout',
-  
-  // Admin routes
-  ADMIN: '/admin',
-  ADMIN_PRODUCTS: '/admin/products',
-  ADMIN_ORDERS: '/admin/orders',
-  ADMIN_USERS: '/admin/users'
+  CHECKOUT: '/checkout',
+  ORDERS: '/orders'
 }; 

@@ -26,6 +26,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['customer', 'admin'],
     default: 'customer'
+  },
+  email_verified: {
+    type: Boolean,
+    default: false
+  },
+  verification_token: {
+    type: String,
+    index: true
+  },
+  verification_expiry: {
+    type: Date
   }
 }, {
   timestamps: true,
@@ -33,6 +44,8 @@ const userSchema = new mongoose.Schema({
     transform: (doc, ret) => {
       delete ret.password;
       delete ret.__v;
+      delete ret.verification_token;
+      delete ret.verification_expiry;
       return ret;
     }
   }
