@@ -1,21 +1,15 @@
-import { Navigate, useLocation, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { ROUTES } from '@/config/routes';
-import LoadingSpinner from './ui/LoadingSpinner';
+import LoadingSpinner from '@/components/common/ui/LoadingSpinner';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
-  const location = useLocation();
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} state={{ from: location.pathname }} replace />;
-  }
-
-  return <Outlet />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/auth/login" replace />;
 };
 
 export default ProtectedRoute; 

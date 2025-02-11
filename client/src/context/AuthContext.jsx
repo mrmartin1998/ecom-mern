@@ -1,10 +1,11 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
+import { authService } from '../services/auth.service';
 
 // Create context
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null);
 
 // Export the useAuth hook
 export const useAuth = () => {
@@ -22,70 +23,48 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Initialize auth state
   useEffect(() => {
-    // Check for existing token and validate it
-    const token = localStorage.getItem('token');
-    if (token) {
-      validateToken(token);
-    } else {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await authService.getCurrentUser();
+          if (response.data) {
+            setUser(response.data);
+            setIsAuthenticated(true);
+          }
+        } catch (error) {
+          console.error('Auth initialization error:', error);
+          localStorage.removeItem('token');
+        }
+      }
       setLoading(false);
-    }
-  }, []);
+    };
 
-  const validateToken = async (token) => {
-    try {
-      const response = await api.get('/auth/validate-token');
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      localStorage.removeItem('token');
-      delete api.defaults.headers.common['Authorization'];
-      setUser(null);
-      setIsAuthenticated(false);
-    }
-  };
+    initAuth();
+  }, []);
 
   const login = async (credentials) => {
     try {
-      setLoading(true);
-      const response = await api.post('/auth/login', credentials);
-      
-      // Store token
-      localStorage.setItem('token', response.data.token);
-      
-      // Set auth header for future requests
-      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-      
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-      return { success: true };
+      const response = await authService.login(credentials);
+      if (response.success) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
     } catch (error) {
-      setError(error.message || 'Login failed');
-      setIsAuthenticated(false);
-      return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
+      console.error('Login error:', error);
+      return false;
     }
   };
 
-  const logout = useCallback(async () => {
-    setLoading(true);
-    try {
-      await api.post('/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
-      delete api.defaults.headers.common['Authorization'];
-      setUser(null);
-      setIsAuthenticated(false);
-      navigate(ROUTES.HOME);
-      setLoading(false);
-    }
-  }, [navigate]);
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
   const register = useCallback(async (userData) => {
     setLoading(true);

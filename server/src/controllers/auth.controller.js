@@ -146,6 +146,54 @@ class AuthController {
     // Implement token validation
     res.json({ success: true });
   }
+
+  async getCurrentUser(req, res) {
+    try {
+      console.log('Getting current user with ID:', req.user.userId);
+      const user = await User.findById(req.user.userId).select('-password');
+      
+      if (!user) {
+        console.log('User not found for ID:', req.user.userId);
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found'
+          }
+        });
+      }
+
+      // Set headers to prevent caching
+      res.set('Cache-Control', 'no-store');
+      res.set('Pragma', 'no-cache');
+      
+      console.log('Sending user data:', user);
+      res.json({
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            preferences: user.preferences,
+            email_verified: user.email_verified,
+            phone: user.phone,
+            address: user.address
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get current user error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: error.message
+        }
+      });
+    }
+  }
 }
 
 module.exports = AuthController; 

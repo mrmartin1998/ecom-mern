@@ -1,34 +1,42 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: 'http://localhost:5000/api'
 });
 
-// Request interceptor for adding auth token
+// Add token to all requests
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Simple request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    console.log('Request Config:', config); // Debug log
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request Error:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Response interceptor for handling errors
+// Response interceptor
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    console.log('Response:', response); // Debug log
+    return response;
+  },
   (error) => {
-    const customError = {
-      code: error.response?.data?.error?.code || 'UNKNOWN_ERROR',
-      message: error.response?.data?.error?.message || 'An unexpected error occurred',
-      status: error.response?.status || 500,
-    };
-    return Promise.reject(customError);
+    console.error('Response Error:', error);
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+    }
+    return Promise.reject(error);
   }
 );
 
