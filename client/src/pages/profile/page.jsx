@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProfileLayout from '../../components/features/profile/ProfileLayout';
 import { LoadingSpinner } from '../../components/common/ui/LoadingSpinner';
+import { ROUTES } from '../../constants/routes';
 
 const ProfilePage = () => {
   const { user, loading, isAuthenticated } = useAuth();
@@ -10,9 +11,9 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate('/login', { 
+      navigate(ROUTES.LOGIN, { 
         replace: true,
-        state: { from: '/profile' }
+        state: { from: ROUTES.PROFILE }
       });
     }
   }, [loading, isAuthenticated, navigate]);

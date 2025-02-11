@@ -16,52 +16,60 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    // Initialize from localStorage if available
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Initialize auth state
   useEffect(() => {
+    // Check for existing token and validate it
     const token = localStorage.getItem('token');
     if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      validateToken(token);
+    } else {
+      setLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (email, password, remember = false) => {
-    setIsLoading(true);
-    setError(null);
+  const validateToken = async (token) => {
     try {
-      const { data } = await api.post('/auth/login', { email, password });
+      const response = await api.get('/auth/validate-token');
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      localStorage.removeItem('token');
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const login = async (credentials) => {
+    try {
+      setLoading(true);
+      const response = await api.post('/auth/login', credentials);
       
-      if (remember) {
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-      } else {
-        sessionStorage.setItem('token', data.data.token);
-        sessionStorage.setItem('user', JSON.stringify(data.data.user));
-      }
+      // Store token
+      localStorage.setItem('token', response.data.token);
       
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.data.token}`;
-      setUser(data.data.user);
+      // Set auth header for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      
+      setUser(response.data.user);
+      setIsAuthenticated(true);
       return { success: true };
     } catch (error) {
-      setError(error.response?.data?.error?.message || 'Login failed');
-      return { success: false, error: error.response?.data?.error?.message };
+      setError(error.message || 'Login failed');
+      setIsAuthenticated(false);
+      return { success: false, error: error.message };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  };
 
   const logout = useCallback(async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       await api.post('/auth/logout');
     } catch (error) {
@@ -73,13 +81,14 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.removeItem('user');
       delete api.defaults.headers.common['Authorization'];
       setUser(null);
-      setIsLoading(false);
+      setIsAuthenticated(false);
       navigate(ROUTES.HOME);
+      setLoading(false);
     }
   }, [navigate]);
 
   const register = useCallback(async (userData) => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     try {
       const { data } = await api.post('/auth/register', userData);
@@ -88,7 +97,7 @@ export const AuthProvider = ({ children }) => {
       setError(error.response?.data?.error?.message || 'Registration failed');
       return { success: false, error: error.response?.data?.error?.message };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
@@ -103,7 +112,7 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const verifyEmail = useCallback(async (token) => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     try {
       const response = await api.get(`/auth/verify-email?token=${token}`);
@@ -112,14 +121,15 @@ export const AuthProvider = ({ children }) => {
       setError(error.response?.data?.error?.message || 'Verification failed');
       return { success: false, error: error.response?.data?.error?.message };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
   const value = {
     user,
-    isLoading,
+    loading,
     error,
+    isAuthenticated,
     login,
     logout,
     register,

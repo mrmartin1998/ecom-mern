@@ -14,13 +14,9 @@ const LoginForm = ({ onSuccess }) => {
 
   const onSubmit = async (data) => {
     try {
-      const result = await login(data.email, data.password, remember);
-      if (result.success) {
-        onSuccess();
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
+      console.log('Form data:', data);
+      await login(data);
+    } catch (error) {
       setError('An error occurred during login');
     }
   };

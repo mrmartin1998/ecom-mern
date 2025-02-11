@@ -12,13 +12,13 @@ const {
 const orderController = new OrderController();
 
 // User routes
-router.get('/', auth(), orderController.index);
-router.get('/:id', auth(), orderController.show);
-router.post('/', auth(), createOrderValidator, validate, orderController.store);
+router.get('/', auth, orderController.index);
+router.get('/:id', auth, orderController.show);
+router.post('/', auth, createOrderValidator, validate, orderController.store);
 
 // Status updates (some restricted to admin)
 router.patch('/:id/status', 
-  auth(['customer', 'admin']), 
+  auth, 
   updateStatusValidator, 
   validate, 
   orderController.updateStatus
@@ -26,12 +26,12 @@ router.patch('/:id/status',
 
 // Admin only routes
 router.patch('/:id/payment', 
-  auth(['admin']), 
+  auth, 
   updatePaymentValidator, 
   validate, 
   orderController.updatePaymentStatus
 );
 
-router.delete('/:id', auth(['admin']), orderController.delete);
+router.delete('/:id', auth, orderController.delete);
 
 module.exports = router; 

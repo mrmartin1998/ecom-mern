@@ -1,17 +1,17 @@
-const router = require('express').Router();
-const profileController = require('../controllers/profile.controller');
+const express = require('express');
+const router = express.Router();
+const ProfileController = require('../controllers/profile.controller');
 const auth = require('../middleware/auth');
-const { validateProfile, validateEmail, validatePassword } = require('../middleware/validators/profile.validator');
 const validate = require('../middleware/validate');
+
+const profileController = new ProfileController();
 
 // Protect all profile routes
 router.use(auth);
 
 // Profile routes
-router.get('/', profileController.getProfile);
-router.put('/', validateProfile, validate, profileController.updateProfile);
-router.put('/email', validateEmail, validate, profileController.updateEmail);
-router.put('/password', validatePassword, validate, profileController.updatePassword);
-router.delete('/', profileController.deleteAccount);
+router.get('/', profileController.show);
+router.put('/', profileController.update);
+router.delete('/', profileController.delete);
 
 module.exports = router; 

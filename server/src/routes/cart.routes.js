@@ -12,10 +12,10 @@ const cartController = new CartController();
 router.use(generalLimiter);
 
 // Cart routes with validation
-router.get('/', auth(), cartController.show);
-router.post('/items', auth(), addItemValidator, validate, cartController.addItem);
-router.patch('/items/:productId', auth(), updateQuantityValidator, validate, cartController.updateQuantity);
-router.delete('/items/:productId', auth(), cartController.removeItem);
-router.delete('/', auth(), cartController.clearCart);
+router.get('/', auth, cartController.show.bind(cartController));
+router.post('/items', auth, addItemValidator, validate, cartController.addItem.bind(cartController));
+router.patch('/items/:productId', auth, updateQuantityValidator, validate, cartController.updateQuantity.bind(cartController));
+router.delete('/items/:productId', auth, cartController.removeItem.bind(cartController));
+router.delete('/', auth, cartController.clearCart.bind(cartController));
 
 module.exports = router; 

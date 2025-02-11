@@ -11,13 +11,21 @@ class AuthService {
   }
 
   async login(credentials) {
+    console.log('Login credentials:', credentials);
     try {
-      const response = await api.post('/auth/login', credentials);
+      const loginData = {
+        email: credentials.email,
+        password: credentials.password
+      };
+      console.log('Sending login data:', loginData);
+      const response = await api.post('/auth/login', loginData);
+      console.log('Login response:', response.data);
       if (response.data?.token) {
         localStorage.setItem('token', response.data.token);
       }
       return response;
     } catch (error) {
+      console.error('Login error:', error.response?.data || error.message);
       throw error;
     }
   }
