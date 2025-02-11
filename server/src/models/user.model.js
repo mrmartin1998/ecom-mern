@@ -31,7 +31,22 @@ const userSchema = new mongoose.Schema({
   verification_token: String,
   verification_expiry: Date,
   reset_token: String,
-  reset_token_expiry: Date
+  reset_token_expiry: Date,
+  phone: {
+    type: String,
+    trim: true
+  },
+  address: {
+    street: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    zipCode: { type: String, trim: true },
+    country: { type: String, trim: true }
+  },
+  preferences: {
+    notifications: { type: Boolean, default: true },
+    newsletter: { type: Boolean, default: false }
+  }
 }, {
   timestamps: true,
   toJSON: {
