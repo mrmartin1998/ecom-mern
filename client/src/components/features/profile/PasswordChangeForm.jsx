@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import profileService from '../../../services/profile.service';
-import { Input } from '../../common/ui/Input';
+import { Input } from '../../common/forms/Input';
 
 const PasswordChangeForm = () => {
   const [loading, setLoading] = useState(false);

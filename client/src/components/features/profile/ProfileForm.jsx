@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'react-toastify';
 import profileService from '../../../services/profile.service';
-import { Input } from '../../common/ui/Input';
+import { Input } from '../../common/forms/Input';
 
 const ProfileForm = () => {
   const { user, updateUser } = useAuth();
