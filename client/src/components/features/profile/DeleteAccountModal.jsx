@@ -60,7 +60,7 @@ const DeleteAccountModal = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                className="btn btn-ghost"
                 disabled={loading}
               >
                 Cancel
@@ -68,7 +68,7 @@ const DeleteAccountModal = ({ isOpen, onClose }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                className="btn btn-error"
               >
                 {loading ? 'Deleting...' : 'Delete Account'}
               </button>

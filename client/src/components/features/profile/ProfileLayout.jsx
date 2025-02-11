@@ -26,7 +26,7 @@ const ProfileLayout = () => {
           <h2 className="text-xl font-semibold mb-4">Danger Zone</h2>
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            className="btn btn-error"
           >
             Delete Account
           </button>
