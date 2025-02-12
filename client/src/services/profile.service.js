@@ -2,22 +2,22 @@ import api from './api';
 
 const profileService = {
   getProfile: async () => {
-    const response = await api.get('/api/profile');
+    const response = await api.get('/profile');
     return response.data;
   },
 
   updateProfile: async (profileData) => {
-    const response = await api.put('/api/profile', profileData);
+    const response = await api.put('/profile', profileData);
     return response.data;
   },
 
   updateEmail: async (email) => {
-    const response = await api.put('/api/profile/email', { email });
+    const response = await api.put('/profile/email', { email });
     return response.data;
   },
 
   updatePassword: async (currentPassword, newPassword) => {
-    const response = await api.put('/api/profile/password', {
+    const response = await api.put('/profile/password', {
       currentPassword,
       newPassword
     });
@@ -25,7 +25,7 @@ const profileService = {
   },
 
   deleteAccount: async () => {
-    await api.delete('/api/profile');
+    await api.delete('/profile');
   }
 };
 

@@ -1,4 +1,5 @@
 const { body } = require('express-validator');
+const Joi = require('joi');
 
 const validateProfile = [
   body('username')
@@ -45,8 +46,39 @@ const validatePassword = [
     .withMessage('Password must contain at least one letter and one number')
 ];
 
+const profileValidation = {
+  updateProfile: Joi.object({
+    username: Joi.string().min(3).max(30),
+    phone: Joi.string(),
+    address: Joi.object({
+      street: Joi.string(),
+      city: Joi.string(),
+      state: Joi.string(),
+      zipCode: Joi.string(),
+      country: Joi.string()
+    }),
+    preferences: Joi.object({
+      notifications: Joi.boolean(),
+      newsletter: Joi.boolean()
+    })
+  }),
+
+  updatePassword: Joi.object({
+    currentPassword: Joi.string().required(),
+    newPassword: Joi.string()
+      .min(8)
+      .pattern(/^(?=.*[A-Za-z])(?=.*\d)/)
+      .required()
+      .messages({
+        'string.min': 'Password must be at least 8 characters long',
+        'string.pattern.base': 'Password must contain at least one letter and one number'
+      })
+  })
+};
+
 module.exports = {
   validateProfile,
   validateEmail,
-  validatePassword
+  validatePassword,
+  profileValidation
 }; 

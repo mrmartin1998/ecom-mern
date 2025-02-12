@@ -1,10 +1,11 @@
 const User = require('../models/user.model');
+const bcrypt = require('bcryptjs');  // Add this for password hashing
 
-const profileController = {
+class ProfileController {
   // Get user profile
-  getProfile: async (req, res) => {
+  async getProfile(req, res) {
     try {
-      const user = await User.findById(req.user.id).select('-password');
+      const user = await User.findById(req.user.userId).select('-password');
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -12,14 +13,17 @@ const profileController = {
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  },
+  }
 
   // Update profile
-  updateProfile: async (req, res) => {
+  async updateProfile(req, res) {
     try {
+      console.log('Update Profile - Request Body:', req.body);
+      console.log('Update Profile - User ID:', req.user.userId);
+      
       const { username, phone, address, preferences } = req.body;
       const user = await User.findByIdAndUpdate(
-        req.user.id,
+        req.user.userId,
         { 
           $set: {
             username,
@@ -31,17 +35,24 @@ const profileController = {
         { new: true, runValidators: true }
       ).select('-password');
 
+      console.log('Update Profile - Updated User:', user);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
       res.json(user);
     } catch (error) {
+      console.error('Update Profile Error:', error);
       res.status(500).json({ message: error.message });
     }
-  },
+  }
 
   // Update email with verification
-  updateEmail: async (req, res) => {
+  async updateEmail(req, res) {
     try {
       const { email } = req.body;
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(req.user.userId);
       
       // Check if email is already in use
       const existingUser = await User.findOne({ email });
@@ -60,17 +71,47 @@ const profileController = {
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  },
+  }
 
   // Delete account
-  deleteAccount: async (req, res) => {
+  async deleteAccount(req, res) {
     try {
-      await User.findByIdAndDelete(req.user.id);
+      await User.findByIdAndDelete(req.user.userId);
       res.json({ message: 'Account deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
-};
 
-module.exports = profileController; 
+  // Add updatePassword method
+  async updatePassword(req, res) {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      // Get user with password
+      const user = await User.findById(req.user.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Verify current password
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      
+      await user.save();
+
+      res.json({ message: 'Password updated successfully' });
+    } catch (error) {
+      console.error('Update Password Error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+}
+
+module.exports = ProfileController; 
