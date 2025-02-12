@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/common/ProtectedRoute';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ResetPassword from './components/features/auth/ResetPassword';
 
 // Lazy load pages
 const HomePage = lazy(() => import('@/pages/home/page'));
@@ -22,6 +23,7 @@ const CartPage = lazy(() => import('@/pages/cart/page'));
 const VerifyEmailPage = lazy(() => import('@/pages/auth/verify-email.page'));
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password/page'));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/reset-password/page'));
+const ProfilePage = lazy(() => import('@/pages/profile/page'));
 
 function App() {
   return (
@@ -57,10 +59,11 @@ function App() {
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
-                {/* ... protected routes ... */}
+                <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
               </Route>
 
               {/* Remove 404 Route for now since NotFoundPage isn't ready */}
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Routes>
           </main>
         </Suspense>

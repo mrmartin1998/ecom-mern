@@ -1,6 +1,6 @@
 import api from './api';
 
-class AuthService {
+export const authService = {
   async register(userData) {
     try {
       const response = await api.post('/auth/register', userData);
@@ -8,19 +8,15 @@ class AuthService {
     } catch (error) {
       throw error;
     }
-  }
+  },
 
   async login(credentials) {
-    try {
-      const response = await api.post('/auth/login', credentials);
-      if (response.data?.token) {
-        localStorage.setItem('token', response.data.token);
-      }
-      return response;
-    } catch (error) {
-      throw error;
+    const response = await api.post('/auth/login', credentials);
+    if (response.data.success) {
+      localStorage.setItem('token', response.data.data.token);
     }
-  }
+    return response.data;
+  },
 
   async verifyEmail(token) {
     try {
@@ -32,36 +28,27 @@ class AuthService {
       console.error('Verification error:', error);
       throw error;
     }
-  }
+  },
 
-  async logout() {
-    try {
-      await api.post('/auth/logout');
-      localStorage.removeItem('token');
-    } catch (error) {
-      // Still remove token even if API call fails
-      localStorage.removeItem('token');
-      throw error;
-    }
-  }
+  logout() {
+    localStorage.removeItem('token');
+  },
 
-  isAuthenticated() {
-    return !!localStorage.getItem('token');
-  }
+  getToken() {
+    return localStorage.getItem('token');
+  },
 
   async forgotPassword(email) {
     const response = await api.post('/auth/forgot-password', { email });
     return response.data;
-  }
+  },
 
   async resetPassword(token, password) {
     const response = await api.post('/auth/reset-password', { token, password });
     return response.data;
+  },
+
+  async getCurrentUser() {
+    return api.get('/auth/me');
   }
-}
-
-// Export an instance instead of the class
-export const authService = new AuthService();
-
-// Also export the class as default if needed
-export default AuthService; 
+}; 

@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { handleError, AppError } = require('./utils/errorHandler');
 require('dotenv').config();
 const routes = require('./routes');
+const profileRoutes = require('./routes/profile.routes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(limiter);                   // Rate limiting
 
 // Routes
 app.use('/api', routes);
+app.use('/api/profile', profileRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

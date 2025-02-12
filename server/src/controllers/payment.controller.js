@@ -10,7 +10,7 @@ class PaymentController {
   }
 
   // Create payment intent
-  createPaymentIntent = async (req, res, next) => {
+  async createPaymentIntent(req, res) {
     try {
       const order = await Order.findOne({
         _id: req.params.orderId,
@@ -40,7 +40,13 @@ class PaymentController {
         meta: null
       });
     } catch (error) {
-      next(error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'PAYMENT_INTENT_FAILED',
+          message: error.message
+        }
+      });
     }
   }
 
@@ -87,6 +93,36 @@ class PaymentController {
     if (!order) return;
 
     await order.updatePaymentStatus('failed');
+  }
+
+  async confirmPayment(req, res) {
+    try {
+      // Implementation for confirming payment
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'PAYMENT_CONFIRMATION_FAILED',
+          message: error.message
+        }
+      });
+    }
+  }
+
+  async getPaymentStatus(req, res) {
+    try {
+      // Implementation for getting payment status
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'PAYMENT_STATUS_FAILED',
+          message: error.message
+        }
+      });
+    }
   }
 }
 

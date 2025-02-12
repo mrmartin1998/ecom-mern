@@ -1,10 +1,11 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
+import { authService } from '../services/auth.service';
 
 // Create context
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null);
 
 // Export the useAuth hook
 export const useAuth = () => {
@@ -16,70 +17,57 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    // Initialize from localStorage if available
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   // Initialize auth state
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-    setIsLoading(false);
-  }, []);
-
-  const login = useCallback(async (email, password, remember = false) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { data } = await api.post('/auth/login', { email, password });
-      
-      if (remember) {
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-      } else {
-        sessionStorage.setItem('token', data.data.token);
-        sessionStorage.setItem('user', JSON.stringify(data.data.user));
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await authService.getCurrentUser();
+          if (response.data) {
+            setUser(response.data);
+            setIsAuthenticated(true);
+          }
+        } catch (error) {
+          console.error('Auth initialization error:', error);
+          localStorage.removeItem('token');
+        }
       }
-      
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.data.token}`;
-      setUser(data.data.user);
-      return { success: true };
-    } catch (error) {
-      setError(error.response?.data?.error?.message || 'Login failed');
-      return { success: false, error: error.response?.data?.error?.message };
-    } finally {
-      setIsLoading(false);
-    }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-  const logout = useCallback(async () => {
-    setIsLoading(true);
+  const login = async (credentials) => {
     try {
-      await api.post('/auth/logout');
+      const response = await authService.login(credentials);
+      if (response.success) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
     } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
-      delete api.defaults.headers.common['Authorization'];
-      setUser(null);
-      setIsLoading(false);
-      navigate(ROUTES.HOME);
+      console.error('Login error:', error);
+      return false;
     }
-  }, [navigate]);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
   const register = useCallback(async (userData) => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     try {
       const { data } = await api.post('/auth/register', userData);
@@ -88,7 +76,7 @@ export const AuthProvider = ({ children }) => {
       setError(error.response?.data?.error?.message || 'Registration failed');
       return { success: false, error: error.response?.data?.error?.message };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
@@ -103,7 +91,7 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const verifyEmail = useCallback(async (token) => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     try {
       const response = await api.get(`/auth/verify-email?token=${token}`);
@@ -112,14 +100,15 @@ export const AuthProvider = ({ children }) => {
       setError(error.response?.data?.error?.message || 'Verification failed');
       return { success: false, error: error.response?.data?.error?.message };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
   const value = {
     user,
-    isLoading,
+    loading,
     error,
+    isAuthenticated,
     login,
     logout,
     register,

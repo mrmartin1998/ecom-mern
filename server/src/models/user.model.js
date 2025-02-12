@@ -31,7 +31,24 @@ const userSchema = new mongoose.Schema({
   verification_token: String,
   verification_expiry: Date,
   reset_token: String,
-  reset_token_expiry: Date
+  reset_token_expiry: Date,
+  phone: {
+    type: String,
+    trim: true
+  },
+  address: {
+    street: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    zipCode: { type: String, trim: true },
+    country: { type: String, trim: true }
+  },
+  preferences: {
+    notifications: { type: Boolean, default: true },
+    newsletter: { type: Boolean, default: false }
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
 }, {
   timestamps: true,
   toJSON: {
@@ -47,29 +64,18 @@ const userSchema = new mongoose.Schema({
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(12);
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
   }
+  next();
 });
 
 // Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    console.log('Comparing passwords...');
-    console.log('Stored hash:', this.password);
-    const isMatch = await bcrypt.compare(candidatePassword, this.password);
-    console.log('Password match result:', isMatch);
-    return isMatch;
-  } catch (error) {
-    console.error('Password comparison error:', error);
-    throw error;
-  }
+  console.log('Comparing passwords...');
+  console.log('Stored hash:', this.password);
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method to generate JWT
