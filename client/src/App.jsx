@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/common/ProtectedRoute';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ResetPassword from './components/features/auth/ResetPassword';
 
 // Lazy load pages
 const HomePage = lazy(() => import('@/pages/home/page'));
@@ -62,6 +63,7 @@ function App() {
               </Route>
 
               {/* Remove 404 Route for now since NotFoundPage isn't ready */}
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Routes>
           </main>
         </Suspense>

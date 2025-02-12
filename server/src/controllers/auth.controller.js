@@ -7,6 +7,11 @@ const crypto = require('crypto');
 const EmailService = require('../services/email.service');
 
 class AuthController {
+  constructor() {
+    this.emailService = new EmailService();
+    this.tokenService = new TokenService();
+  }
+
   async register(req, res) {
     try {
       const { email, password } = req.body;
@@ -27,28 +32,33 @@ class AuthController {
 
       // Create new user
       const user = new User({ email, password });
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      user.verification_token = verificationToken;
       await user.save();
       console.log('New user created with ID:', user._id);
 
-      // Generate token
-      const token = user.generateAuthToken();
+      // Send verification email
+      console.log('Sending verification email to:', email);
+      try {
+        await this.emailService.sendVerificationEmail(email, verificationToken);
+        console.log('Verification email sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't return here, just log the error
+      }
 
       res.status(201).json({
         success: true,
         data: {
-          user: { id: user._id, email: user.email },
-          token
+          user: {
+            email: user.email,
+            id: user._id
+          }
         }
       });
     } catch (error) {
       console.error('Registration error:', error);
-      res.status(500).json({
-        success: false,
-        error: {
-          code: 'REGISTRATION_FAILED',
-          message: error.message
-        }
-      });
+      res.status(500).json({ message: error.message });
     }
   }
 
@@ -123,8 +133,45 @@ class AuthController {
   }
 
   async verifyEmail(req, res) {
-    // Implement email verification
-    res.json({ success: true });
+    try {
+      const { token } = req.query;
+      console.log('Verifying email with token:', token);
+
+      // Find user with verification token
+      const user = await User.findOne({ verification_token: token });
+      
+      if (!user) {
+        console.log('Invalid verification token');
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_TOKEN',
+            message: 'Invalid verification token'
+          }
+        });
+      }
+
+      // Update user verification status
+      user.email_verified = true;
+      user.verification_token = undefined; // Clear the token
+      await user.save();
+      
+      console.log('Email verified successfully for user:', user.email);
+
+      res.json({
+        success: true,
+        message: 'Email verified successfully'
+      });
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'VERIFICATION_FAILED',
+          message: error.message
+        }
+      });
+    }
   }
 
   async refreshToken(req, res) {
@@ -133,13 +180,75 @@ class AuthController {
   }
 
   async forgotPassword(req, res) {
-    // Implement forgot password
-    res.json({ success: true });
+    try {
+      const { email } = req.body;
+      console.log('Forgot password request for:', email);
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        console.log('User not found for forgot password:', email);
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+      await user.save();
+
+      await this.emailService.sendPasswordResetEmail(email, resetToken);
+      res.json({ message: 'Password reset email sent' });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ message: error.message });
+    }
   }
 
   async resetPassword(req, res) {
-    // Implement reset password
-    res.json({ success: true });
+    try {
+      const { token, password } = req.body;
+      console.log('Reset password attempt with token:', token);
+
+      const user = await User.findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: Date.now() }
+      });
+
+      if (!user) {
+        console.log('Invalid or expired reset token');
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_TOKEN',
+            message: 'Password reset token is invalid or has expired'
+          }
+        });
+      }
+
+      // Let the User model's pre-save middleware handle the hashing
+      user.password = password;
+      
+      // Clear reset token fields
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+
+      await user.save();
+      console.log('Password successfully reset for user:', user.email);
+
+      res.json({
+        success: true,
+        message: 'Password has been reset'
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'RESET_FAILED',
+          message: error.message
+        }
+      });
+    }
   }
 
   async validateToken(req, res) {
