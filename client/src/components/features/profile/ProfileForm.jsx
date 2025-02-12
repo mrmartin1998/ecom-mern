@@ -68,10 +68,12 @@ const ProfileForm = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const updatedUser = await profileService.updateProfile(formData);
-      updateUser(updatedUser);
+      const response = await profileService.updateProfile(formData);
+      setFormData(response);
+      window.location.reload();
       toast.success('Profile updated successfully');
     } catch (error) {
+      console.error('Profile update error:', error);
       toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
