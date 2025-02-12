@@ -232,3 +232,42 @@
   - [ ] Test cases defined
   - [ ] Branch created
   ``` 
+
+## Feature Protection Rules
+1. Never Modify Working Features
+   - Test existing functionality before making changes
+   - Document current working state
+   - Verify all existing features after changes
+   - Roll back immediately if any existing feature breaks
+
+2. Change Validation Process
+   - Create backup of current working state
+   - Test all related features before changes
+   - Test all related features after changes
+   - Document all tests performed
+
+3. Code Modification Safety
+   - Never remove existing code without verification
+   - Keep existing validation patterns
+   - Maintain current authentication flows
+   - Preserve working middleware chains
+
+4. Testing Requirements
+   Before any changes:
+   - [ ] Test all authentication flows
+   - [ ] Verify user operations
+   - [ ] Document working features
+   - [ ] Create restore point
+
+   After changes:
+   - [ ] Re-test all authentication flows
+   - [ ] Verify all user operations
+   - [ ] Compare with pre-change documentation
+   - [ ] Prepare rollback procedure
+
+5. Critical Systems Protection
+   Never modify without thorough testing:
+   - Authentication systems
+   - Password handling
+   - User sessions
+   - Data validation

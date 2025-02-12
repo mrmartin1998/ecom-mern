@@ -7,16 +7,9 @@ const tokenBlacklist = new Set();
 class TokenService {
   static generateToken(user) {
     return jwt.sign(
-      { 
-        userId: user._id,
-        role: user.role,
-        version: user.tokenVersion // For token invalidation
-      },
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { 
-        expiresIn: '24h',
-        algorithm: 'HS256'
-      }
+      { expiresIn: '24h' }
     );
   }
 

@@ -13,9 +13,9 @@ router.get('/', generalLimiter, productQueryValidator, validate, productControll
 router.get('/:id', generalLimiter, productController.show);
 
 // Admin only routes
-router.post('/', auth(['admin']), createProductValidator, validate, productController.store);
-router.put('/:id', auth(['admin']), createProductValidator, validate, productController.update);
-router.delete('/:id', auth(['admin']), productController.delete);
-router.post('/bulk', auth(['admin']), productController.bulkUpdate);
+router.post('/', auth, createProductValidator, validate, productController.store);
+router.put('/:id', auth, createProductValidator, validate, productController.update);
+router.delete('/:id', auth, productController.delete);
+router.post('/bulk', auth, productController.bulkUpdate);
 
 module.exports = router; 

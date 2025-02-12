@@ -1,29 +1,43 @@
-const { AppError } = require('../utils/errorHandler');
-const TokenService = require('../services/token.service');
+const jwt = require('jsonwebtoken');
 
-const auth = (roles = []) => {
-  return (req, res, next) => {
-    try {
-      const token = req.header('Authorization')?.replace('Bearer ', '');
-      
-      if (!token) {
-        throw new AppError('NO_TOKEN', 'Authentication required', 401);
-      }
-      
-      const decoded = TokenService.verifyToken(token);
-      
-      // Check if user has required role
-      if (roles.length && !roles.includes(decoded.role)) {
-        throw new AppError('UNAUTHORIZED', 'Insufficient permissions', 403);
-      }
-      
-      req.userId = decoded.userId;
-      req.userRole = decoded.role;
-      next();
-    } catch (error) {
-      next(error);
+const authMiddleware = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: { message: 'Authorization header missing or invalid' }
+      });
     }
-  };
+
+    const token = authHeader.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { message: 'No token provided' }
+      });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
+      next();
+    } catch (jwtError) {
+      console.error('JWT verification failed:', jwtError);
+      return res.status(401).json({
+        success: false,
+        error: { message: 'Invalid token' }
+      });
+    }
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { message: 'Internal server error' }
+    });
+  }
 };
 
-module.exports = auth; 
+module.exports = authMiddleware; 

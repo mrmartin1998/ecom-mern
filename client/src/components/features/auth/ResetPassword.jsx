@@ -13,6 +13,13 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!token) {
+      toast.error('Invalid reset token');
+      navigate('/forgot-password');
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -28,7 +35,7 @@ const ResetPassword = () => {
         }, 2000);
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to reset password');
+      toast.error(error.response?.data?.message || 'Failed to reset password');
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +58,7 @@ const ResetPassword = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-base-200 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-4 text-center">Set New Password</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">Reset Password</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-control">
           <label className="label">
@@ -64,6 +71,7 @@ const ResetPassword = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
+            autoComplete="new-password"
           />
         </div>
         <div className="form-control mt-4">
@@ -77,9 +85,11 @@ const ResetPassword = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={8}
+            autoComplete="new-password"
           />
         </div>
         <button 
+          type="submit" 
           className={`btn btn-primary w-full mt-6 ${isLoading ? 'loading' : ''}`}
           disabled={isLoading}
         >

@@ -14,13 +14,12 @@ const LoginForm = ({ onSuccess }) => {
 
   const onSubmit = async (data) => {
     try {
-      const result = await login(data.email, data.password, remember);
-      if (result.success) {
+      console.log('Form data:', data);
+      const success = await login(data);
+      if (success && onSuccess) {
         onSuccess();
-      } else {
-        setError(result.error);
       }
-    } catch (err) {
+    } catch (error) {
       setError('An error occurred during login');
     }
   };
