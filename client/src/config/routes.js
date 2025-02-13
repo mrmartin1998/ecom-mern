@@ -18,5 +18,10 @@ export const ROUTES = {
   // Shopping Routes
   CART: '/cart',
   CHECKOUT: '/checkout',
-  ORDERS: '/orders'
+  ORDERS: '/orders',
+  
+  // Admin Routes
+  ADMIN: '/admin',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_LOGS: '/admin/logs',
 }; 

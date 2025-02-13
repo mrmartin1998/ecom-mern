@@ -24,6 +24,7 @@ const VerifyEmailPage = lazy(() => import('@/pages/auth/verify-email.page'));
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password/page'));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/reset-password/page'));
 const ProfilePage = lazy(() => import('@/pages/profile/page'));
+const AdminDashboard = lazy(() => import('@/pages/admin/page'));
 
 function App() {
   return (
@@ -60,6 +61,11 @@ function App() {
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+                
+                {/* Admin Routes - Nested under ProtectedRoute */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminDashboard />} />
+                <Route path="/admin/logs" element={<AdminDashboard />} />
               </Route>
 
               {/* Remove 404 Route for now since NotFoundPage isn't ready */}
