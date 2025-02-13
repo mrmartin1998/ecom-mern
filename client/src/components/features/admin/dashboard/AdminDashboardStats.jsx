@@ -1,21 +1,34 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { adminService } from '@/services/admin.service'
 import AdminCard from '../common/AdminCard'
 import LoadingSpinner from '@/components/common/ui/LoadingSpinner'
 
 const AdminDashboardStats = () => {
-  const [metrics, setMetrics] = useState(null)
+  const [metrics, setMetrics] = useState({
+    users: {
+      total: 0,
+      active: 0,
+      disabled: 0
+    },
+    roles: {
+      admin: 0,
+      user: 0
+    }
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const data = await adminService.getSystemMetrics()
-        setMetrics(data)
+        const response = await adminService.getSystemMetrics()
+        console.log('Raw metrics response:', response) // Let's see what we get
+        if (response && response.data) {
+          setMetrics(response.data)
+        }
       } catch (err) {
-        setError('Failed to load system metrics')
         console.error('Error fetching metrics:', err)
+        setError(err.message)
       } finally {
         setLoading(false)
       }
@@ -24,14 +37,17 @@ const AdminDashboardStats = () => {
     fetchMetrics()
   }, [])
 
+  // Add debug info
+  console.log('Current metrics state:', metrics)
+
   if (loading) return <LoadingSpinner />
   if (error) return <div className="text-error">{error}</div>
 
   const statCards = [
-    { title: 'Total Users', value: metrics?.totalUsers || 0, icon: '👥' },
-    { title: 'Active Users', value: metrics?.activeUsers || 0, icon: '✅' },
-    { title: 'New Users (24h)', value: metrics?.newUsers || 0, icon: '🆕' },
-    { title: 'System Events', value: metrics?.totalEvents || 0, icon: '📊' }
+    { title: 'Total Users', value: metrics.users?.total || 0, icon: '👥' },
+    { title: 'Active Users', value: metrics.users?.active || 0, icon: '✅' },
+    { title: 'New Users (24h)', value: 0, icon: '🆕' },
+    { title: 'System Events', value: 0, icon: '📊' }
   ]
 
   return (

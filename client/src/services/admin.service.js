@@ -3,19 +3,24 @@ import api from './api'
 export const adminService = {
   getSystemMetrics: async () => {
     try {
+      console.log('Fetching system metrics...')
       const response = await api.get('/admin/metrics')
+      console.log('Metrics response:', response.data)
       return response.data
     } catch (error) {
+      console.error('Metrics error:', error)
       throw error
     }
   },
 
   getUsers: async () => {
     try {
+      console.log('Fetching users...')
       const response = await api.get('/admin/users')
+      console.log('Users response:', response.data)
       return response.data.data || []
     } catch (error) {
-      console.error('Error fetching users:', error)
+      console.error('Users error:', error)
       throw error
     }
   },

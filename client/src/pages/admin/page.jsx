@@ -1,13 +1,24 @@
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import AdminLayout from '@/components/features/admin/layout/AdminLayout'
 import AdminDashboardStats from '@/components/features/admin/dashboard/AdminDashboardStats'
 import UserManagementTable from '@/components/features/admin/users/UserManagementTable'
 
 const AdminDashboard = () => {
+  const { user, hasRole } = useAuth()
+  const navigate = useNavigate()
+
   // Verify admin access
   useEffect(() => {
-    // Add admin role verification
-  }, [])
+    if (!hasRole(['admin'])) {
+      navigate('/')
+    }
+  }, [hasRole, navigate])
+
+  if (!user || user.role !== 'admin') {
+    return null // Or loading spinner
+  }
 
   return (
     <AdminLayout>
