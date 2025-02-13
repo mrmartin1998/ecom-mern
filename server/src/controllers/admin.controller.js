@@ -1,6 +1,6 @@
 const User = require('../models/user.model');
 const AuditLog = require('../models/audit.model');
-const AuditService = require('../services/audit.service');
+const { auditService } = require('../services/audit.service');
 
 class AdminController {
   // Get list of all users
@@ -56,10 +56,12 @@ class AdminController {
         });
       }
 
-      await AuditService.log('ROLE_UPDATE', req.user.userId, userId, {
-        oldRole: user.role,
-        newRole: role
-      });
+      await auditService.log(
+        auditService.actions.ROLE_UPDATED,
+        req.user._id,
+        userId,
+        { oldRole: user.role, newRole: role }
+      );
 
       res.json({
         success: true,
@@ -109,7 +111,7 @@ class AdminController {
         });
       }
 
-      await AuditService.log('STATUS_UPDATE', req.user.userId, userId, {
+      await auditService.log('STATUS_UPDATE', req.user.userId, userId, {
         oldStatus: user.status,
         newStatus: status
       });
@@ -143,9 +145,11 @@ class AdminController {
           disabled: await User.countDocuments({ status: 'disabled' }),
           new24h: await User.countDocuments({ createdAt: { $gte: last24h } })
         },
-        roles: {
-          admin: await User.countDocuments({ role: 'admin' }),
-          user: await User.countDocuments({ role: 'user' })
+        system: {
+          events: await AuditLog.countDocuments(),
+          recentEvents: await AuditLog.countDocuments({ 
+            timestamp: { $gte: last24h } 
+          })
         }
       };
 

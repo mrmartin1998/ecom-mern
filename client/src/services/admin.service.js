@@ -41,5 +41,16 @@ export const adminService = {
     } catch (error) {
       throw error
     }
+  },
+
+  getAuditLogs: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const response = await api.get(`/admin/logs?${queryString}`)
+      return response.data
+    } catch (error) {
+      console.error('Audit logs error:', error)
+      throw error
+    }
   }
 } 

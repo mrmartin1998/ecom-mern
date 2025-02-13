@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth.middleware');
 const adminController = require('../controllers/admin.controller');
+const adminErrorHandler = require('../middleware/adminErrorHandler');
 
 // Apply both middleware to all admin routes
 router.use(auth);
@@ -21,5 +22,8 @@ router.get('/status', (req, res) => {
 // Add with existing routes
 router.get('/metrics', adminController.getSystemMetrics);
 router.get('/logs', adminController.getAuditLogs);
+
+// Apply error handler
+router.use(adminErrorHandler);
 
 module.exports = router; 
