@@ -30,8 +30,8 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const response = await authService.getCurrentUser();
-          if (response.data) {
-            setUser(response.data);
+          if (response.data?.data?.user) {
+            setUser(response.data.data.user);
             setIsAuthenticated(true);
           }
         } catch (error) {
@@ -104,6 +104,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const getCurrentUser = async () => {
+    try {
+      const response = await api.get('/api/auth/me');
+      const userData = response.data.data.user;
+      console.log('Setting user data:', userData);
+      setUser(userData);
+    } catch (error) {
+      console.error('Auth Error:', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debug user state changes
+  useEffect(() => {
+    console.log('Current User State:', user);
+  }, [user]);
+
   const value = {
     user,
     loading,
@@ -114,7 +133,8 @@ export const AuthProvider = ({ children }) => {
     register,
     checkAuth,
     hasRole,
-    verifyEmail
+    verifyEmail,
+    getCurrentUser
   };
 
   return (
