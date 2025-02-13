@@ -133,11 +133,15 @@ class AdminController {
   // Get system metrics
   async getSystemMetrics(req, res) {
     try {
+      // Calculate 24h ago timestamp
+      const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
       const metrics = {
         users: {
           total: await User.countDocuments(),
           active: await User.countDocuments({ status: 'active' }),
-          disabled: await User.countDocuments({ status: 'disabled' })
+          disabled: await User.countDocuments({ status: 'disabled' }),
+          new24h: await User.countDocuments({ createdAt: { $gte: last24h } })
         },
         roles: {
           admin: await User.countDocuments({ role: 'admin' }),

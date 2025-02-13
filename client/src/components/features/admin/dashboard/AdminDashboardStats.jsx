@@ -46,7 +46,7 @@ const AdminDashboardStats = () => {
   const statCards = [
     { title: 'Total Users', value: metrics.users?.total || 0, icon: '👥' },
     { title: 'Active Users', value: metrics.users?.active || 0, icon: '✅' },
-    { title: 'New Users (24h)', value: 0, icon: '🆕' },
+    { title: 'New Users (24h)', value: metrics.users?.new24h || 0, icon: '🆕' },
     { title: 'System Events', value: 0, icon: '📊' }
   ]
 
