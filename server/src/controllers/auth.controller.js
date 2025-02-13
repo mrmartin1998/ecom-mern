@@ -5,6 +5,7 @@ const { AppError } = require('../utils/errorHandler');
 const TokenService = require('../services/token.service');
 const crypto = require('crypto');
 const EmailService = require('../services/email.service');
+const AuditService = require('../services/audit.service');
 
 class AuthController {
   constructor() {
@@ -107,6 +108,11 @@ class AuthController {
 
       // Generate token
       const token = user.generateAuthToken();
+
+      await AuditService.log('LOGIN', user._id, null, {
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      });
 
       res.json({
         success: true,
